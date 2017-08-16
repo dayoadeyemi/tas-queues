@@ -1,0 +1,26 @@
+{
+  "name": "task-queues",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/body-parser": "^1.16.4",
+    "@types/express": "^4.0.36",
+    "@types/highland": "^2.10.1",
+    "@types/ramda": "^0.24.7",
+    "@types/uuid": "^3.4.0",
+    "body-parser": "^1.17.2",
+    "express": "^4.15.4",
+    "highland": "^2.11.1",
+    "ramda": "^0.24.1",
+    "sqlite3": "^3.1.9",
+    "typeorm": "0.1.0-alpha.34",
+    "uuid": "^3.1.0"
+  }
+}
