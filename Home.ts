@@ -36,7 +36,7 @@ export class HomeView {
                 </span>
             </nav>
             <div>
-                ${this.queues}
+                ${this.queues.join('\n')}
             </div>
             ${modal}
         `
