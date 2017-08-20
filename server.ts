@@ -1,153 +1,96 @@
 import 'reflect-metadata'
-import {createConnection} from 'typeorm'
-import Task from './Task'
+import { createConnection } from 'typeorm'
+import { TaskModel, TaskController } from './Task'
+import { HomeView } from './Home'
 import * as express from 'express'
 import { urlencoded } from 'body-parser'
-import { EventEmitter } from 'events'
-import { groupBy, prop, toPairs } from 'ramda'
+import * as router from 'express-promise-router';
+import * as cookieParser from 'cookie-parser';
 
-interface Queue { name: string, tasks: Task[] }
-
-class Modal {
-    static count = 0
-    id = 'modal-' + (++Modal.count).toString()
-    constructor(private title, private content: string){}
-    renderButton = () => `
-        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#${this.id}">
-            <span>${this.title}</span> 
-        </button>
-    `
-    render = () => `
-        <div class="modal fade" id="${this.id}" tabindex="-1" role="dialog" aria-labelledby="${this.id}-label" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="${this.id}-label">${this.title}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">${this.content}</div>
-                </div>
-            </div>
-        </div>
-    `
-}
-const taskForm = `
-<form id="task-form" action="/tasks" method="post">
-    <div class="form-group">
-        <label for="title" class="form-label">Title</label>
-        <input name="title" type="text" class="form-control" id="title">
-    </div>
-    <div class="form-group">
-        <label for="description" class="form-label">Description</label>
-        <textarea name="description" class="form-control" id="description" rows="3"></textarea>
-    </div>
-    <div class="form-group text-centre">
-        <label for="submit" class="form-label"></label>
-        <button id="submit" type="submit" class="btn btn-success">Create</button>
-    </div>
-</form>
-`
-
-const renderTask = (task: Task) => `
-<li class="list-group-item">
-    <b>${task.title}</b>: ${task.description}
-</li>`
-
-const renderQueue = (queue: Queue) => {
-    const modal = new Modal('New Task', taskForm)
-    return `
-<div class="card">
-    <div class="card-header" role="tab" id="heading-${queue.name}">
-        <div class="row">
-            <div class="col">
-                <a data-toggle="collapse" href="#${queue.name}-content" aria-expanded="true" aria-controls="${queue.name}-content">
-                    <h5>${queue.name}</h5>
-                </a>
-            </div>
-            <div class="col text-right">
-                ${modal.renderButton()}
-            </div>
-        </div>
-        
-    </div>
-</div>
-<div id="${queue.name}-content" class="collapse show" role="tabpanel" aria-labelledby="heading-${queue.name}">
-    <div class="card-body">
-        ${queue.tasks.map(renderTask).join('\n')}
-    </div>
-</div>
-${modal.render()}
-`
+declare global {
+    namespace Express {
+        export interface Request {
+            Tasks: TaskController
+        }
+        export interface Response { }
+        export interface Application { }
+    }
 }
 
-const renderApp = (queues: Queue[]) => `
-<div>
-    ${queues.map(renderQueue).join('\n')}
-</div>
-`
+const app = express();
+const tasksRouter = router() as express.Router
 
-createConnection({
+tasksRouter.use(cookieParser())
+
+const pConnection = createConnection({
     type: "sqlite",
     database: ".db",
     synchronize: true,
-    entities: [Task],
+    entities: [TaskModel],
+    autoSchemaSync: true,
+    logging: []
 })
-.then(async connection => {
-    const app = express();
-    const events = new EventEmitter()
 
-    app.use(urlencoded({ extended: true }))
-    app.get('/', async (req, res) => {
-        const tasks = await connection.manager.find(Task)
-        const grouped = groupBy(prop('queue'), tasks) as any
-        grouped.p0 = grouped.p0 || []
-        const queues = toPairs(grouped).map((([name, tasks]: [string, Task[]]) => ({ name, tasks })))
-        res.send(`
-<html>
-    <head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">    
-    </head>
-    <body>
-        ${renderApp(queues)}
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
-    </body>
-</html>
-        `)
-    })
+const taskController = new TaskController(pConnection)
 
-    app.get('/tasks/updates', async (req, res) => {
-        // const tasks = await connection.manager.find(Task)
-        res.writeHead(200, {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        });
+tasksRouter.use((req, res, next) => {
+    req.Tasks = taskController
+    next()
+})
+tasksRouter.use(urlencoded({ extended: true }))
+tasksRouter.get('/', async (req, res) => {
+    const { report } = req.query 
+    const tasks = report ? await req.Tasks.report(report) : await req.Tasks.list()
 
-        const listener = (task: Task) => {
-            res.write('data: '+ JSON.stringify(task) + '\n\n')
-        }
+    res.send(`
+        <html>
+            <head>
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">    
+            </head>
+            <body>
+                ${new HomeView(tasks, report ? 'report' : null)}
+                <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+            </body>
+        </html>
+    `)
+})
 
-        events.addListener(req.path, listener)
-
-        req.on('close', () => events.removeListener(req.path, listener))
+tasksRouter.get('/tasks/updates', async (req, res) => {
+    // const tasks = await connection.manager.find(Task)
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
     });
 
-    app.post('/tasks', async (req, res) => {
-        try {
-            const task = new Task('p0', req.body.title, req.body.description)
-            const saved = await connection.getRepository(Task).save(task)
-            events.emit(req.path, saved);
-            // res.send(saved)
-            res.redirect('/')   
-        } catch (e) {
-            return  res.send(e.stack)
-        }
-    });
-  
-    app.listen(3000);
+    const listener = (task: TaskModel) => {
+        res.write('event: data\n')
+        res.write('data: '+ JSON.stringify(task) + '\n\n')
+    }
+
+    req.Tasks.addListener(listener)
+    req.on('close', () =>  req.Tasks.removeListener(listener))
+});
+
+tasksRouter.post('/tasks/:id/archive', async (req, res) => {
+    await await req.Tasks.update(req.params, { archivedAt: new Date() })
+    if (req.cookies.browser) res.redirect('/')
+    else res.sendStatus(204).end()
 })
-.catch(error => console.log(error));
+
+tasksRouter.post('/tasks', async (req, res) => {
+    const saved = await req.Tasks.add(new TaskModel(req.body))
+    if (req.cookies.browser) res.redirect('/')
+    else res.send(saved)
+});
+
+tasksRouter.get('/tasks', async (req, res) => {
+    const tasks = await req.Tasks.list()
+    if (req.cookies.browser) res.redirect('/')
+    else res.send(tasks)
+});
+
+app.use(tasksRouter)
+app.listen(3000);
