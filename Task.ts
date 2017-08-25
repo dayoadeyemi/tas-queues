@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, Index, PrimaryGeneratedColumn, Connectio
 import { Modal } from './Modal'
 import { Decorator } from './Decorator'
 import { EventEmitter } from 'events'
+import { Converter } from 'showdown'
 
 @Entity('task',{ 
   orderBy: {
@@ -61,7 +62,7 @@ export class TaskController {
     })
   }
   async add(task: TaskModel){
-    if (!task.id) {
+    if (!task.priority) {
       const highest = await (await this.connection).manager.findOne(TaskModel, {
           where: {
               archivedAt: null,
@@ -78,6 +79,7 @@ export class TaskController {
   }
 }
 
+const converter = new Converter()
 export interface TaskView extends TaskModel {}
 export class TaskView extends Decorator<TaskModel> implements TaskModel {
   toString = () => {
@@ -90,7 +92,8 @@ export class TaskView extends Decorator<TaskModel> implements TaskModel {
               </button>
           </form>
           <a id="${this.id}" ${modal.toggleParams()}>
-              <b>${this.title}</b>: ${this.description}
+              <b>${this.title}</b>
+              <div>${converter.makeHtml(this.description)}</div>
           </a>
           ${modal}
       </li>`

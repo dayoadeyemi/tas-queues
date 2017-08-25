@@ -4,7 +4,7 @@ import { TaskModel, TaskForm } from './Task'
 import  { Modal } from './Modal'
 import { groupBy, prop, toPairs, sortBy, head } from 'ramda'
 
-const clientjs = readFileSync('./public/app.js', 'utf8')
+const clientjs = 'document.cookie="browser=true"' //readFileSync('./public/app.js', 'utf8')
 
 export class HomeView {
     constructor(private tasks: TaskModel[], private state?: 'report'){}

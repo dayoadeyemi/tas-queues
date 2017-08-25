@@ -2,8 +2,9 @@ import 'reflect-metadata'
 import { createConnection } from 'typeorm'
 import { TaskModel, TaskController } from './Task'
 import { HomeView } from './Home'
+import { IssuesEvent } from './GitHub'
 import * as express from 'express'
-import { urlencoded } from 'body-parser'
+import { urlencoded, json } from 'body-parser'
 import * as router from 'express-promise-router';
 import * as cookieParser from 'cookie-parser';
 
@@ -38,6 +39,7 @@ tasksRouter.use((req, res, next) => {
     next()
 })
 tasksRouter.use(urlencoded({ extended: true }))
+tasksRouter.use(json({  }))
 tasksRouter.get('/', async (req, res) => {
     const { report } = req.query 
     const tasks = report ? await req.Tasks.report(report) : await req.Tasks.list()
@@ -45,7 +47,7 @@ tasksRouter.get('/', async (req, res) => {
     res.send(`
         <html>
             <head>
-            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">    
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
             </head>
             <body>
                 ${new HomeView(tasks, report ? 'report' : null)}
@@ -90,6 +92,22 @@ tasksRouter.get('/tasks', async (req, res) => {
     const tasks = await req.Tasks.list()
     if (req.cookies.browser) res.redirect('/')
     else res.send(tasks)
+});
+
+tasksRouter.post('/github/:username', async (req, res) => {
+    const issuesEvent: IssuesEvent = req.body
+    const username: string = req.params.username
+    if (issuesEvent.action !== 'assigned' ||
+        issuesEvent.assignee.login !== username) {
+        return res.send()
+    }
+    const task = new TaskModel({
+        id: 'github:' + issuesEvent.issue.id,
+        title: issuesEvent.issue.title,
+        description: issuesEvent.issue.body
+    })
+    const saved = await req.Tasks.add(task)
+    res.send(saved)
 });
 
 app.use(tasksRouter)

@@ -18,11 +18,13 @@
     "@types/ramda": "^0.24.7"
   },
   "dependencies": {
+    "@types/showdown": "^1.7.1",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.15.4",
     "express-promise-router": "^2.0.0",
     "ramda": "^0.24.1",
+    "showdown": "^1.7.3",
     "sqlite3": "^3.1.9",
     "typeorm": "0.1.0-alpha.34",
     "typescript": "^2.4.2"
