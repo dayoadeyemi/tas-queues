@@ -2,12 +2,12 @@
   "name": "task-queues",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": ".bin/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "prestart": "npm run build",
-    "start": "node server.js"
+    "postinstall": "npm run build",
+    "start": "node .bin/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -15,10 +15,10 @@
     "@types/body-parser": "^1.16.4",
     "@types/cookie-parser": "^1.4.0",
     "@types/express": "^4.0.36",
-    "@types/ramda": "^0.24.7"
+    "@types/ramda": "^0.24.7",
+    "@types/showdown": "^1.7.1"
   },
   "dependencies": {
-    "@types/showdown": "^1.7.1",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.15.4",

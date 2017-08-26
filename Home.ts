@@ -4,8 +4,6 @@ import { TaskModel, TaskForm } from './Task'
 import  { Modal } from './Modal'
 import { groupBy, prop, toPairs, sortBy, head } from 'ramda'
 
-const clientjs = 'document.cookie="browser=true"' //readFileSync('./public/app.js', 'utf8')
-
 export class HomeView {
     constructor(private tasks: TaskModel[], private state?: 'report'){}
     get queues(){
@@ -19,7 +17,6 @@ export class HomeView {
         const yesterday = new Date(new Date().toISOString().slice(0, 10))
         yesterday.setDate(yesterday.getDate() - 1)
         return `
-            <script>${clientjs}</script>
             <nav class="navbar navbar-light bg-faded">
                 <a href="/"><h1 class="navbar-brand mb-0">Todo Live</h1></a>
                 <span class="navbar-text">
