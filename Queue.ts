@@ -1,4 +1,5 @@
 import { TaskModel, TaskView } from './Task'
+import { ListView } from './List'
 
 export interface QueueModel {
     name: string,
@@ -9,7 +10,7 @@ export interface QueueView extends QueueModel {}
 export class QueueView implements QueueModel {
     name: string
     tasks: TaskView[]
-    constructor(queue: QueueModel){
+    constructor(queue: QueueModel, private state?: 'report'){
         this.name = queue.name
         this.tasks = queue.tasks.map(task => new TaskView(task))
     }
@@ -24,7 +25,7 @@ export class QueueView implements QueueModel {
                             </h5>
                         </div>
                         <div class="col text-right">
-                            <span>${this.tasks.length} outstanding tasks </span>
+                            <span>${this.tasks.length} ${this.state === 'report'? 'completed' : 'outstanding'} tasks </span>
                         </div>
                     </div>
                     
@@ -32,7 +33,7 @@ export class QueueView implements QueueModel {
             </div>
             <div id="${this.name}-content" class="collapse show" role="tabpanel" aria-labelledby="heading-${this.name}">
                 <div class="card-body">
-                    ${this.tasks.join('\n')}
+                    ${new ListView(this.tasks)}
                 </div>
             </div>
         `

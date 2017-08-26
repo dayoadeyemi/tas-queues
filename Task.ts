@@ -85,18 +85,16 @@ export class TaskView extends Decorator<TaskModel> implements TaskModel {
   toString = () => {
     const modal = new Modal('Edit Task', new TaskForm(this))
     return `
-      <li class="list-group-item">
-          <form action="/tasks/${this.id}/archive" method="post" onsubmit="cleanupListeners()">
-              <button type="submit" class="close" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-              </button>
-          </form>
-          <a id="${this.id}" ${modal.toggleParams()}>
-              <b>${this.title}</b>
-              <div>${converter.makeHtml(this.description)}</div>
-          </a>
-          ${modal}
-      </li>`
+      <form action="/tasks/${this.id}/archive" method="post" onsubmit="cleanupListeners()">
+          <button type="submit" class="close" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+      </form>
+      <a id="${this.id}" ${modal.toggleParams()}>
+          <b>${this.title}</b>
+          <div>${converter.makeHtml(this.description)}</div>
+      </a>
+      ${modal}`
   }
 }
 

@@ -51,7 +51,7 @@ tasksRouter.get('/', async (req, res) => {
             </head>
             <body>
                 ${new HomeView(tasks, report ? 'report' : null)}
-                <script src="/app.js">
+                <script src="/app.js"></script>
                 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
                 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
@@ -98,17 +98,23 @@ tasksRouter.get('/tasks', async (req, res) => {
 tasksRouter.post('/github/:username', async (req, res) => {
     const issuesEvent: IssuesEvent = req.body
     const username: string = req.params.username
-    if (issuesEvent.action !== 'assigned' ||
-        issuesEvent.assignee.login !== username) {
-        return res.send()
+    switch (issuesEvent.action) {
+        case 'assigned':
+            if (issuesEvent.assignee.login === username){
+                const task = new TaskModel({
+                    id: 'github:' + issuesEvent.issue.id,
+                    title: issuesEvent.issue.title,
+                    description: issuesEvent.issue.body
+                })
+                const saved = await req.Tasks.add(task)
+                return res.send(saved)
+            }
+            break
+    
+        default:
+            break
     }
-    const task = new TaskModel({
-        id: 'github:' + issuesEvent.issue.id,
-        title: issuesEvent.issue.title,
-        description: issuesEvent.issue.body
-    })
-    const saved = await req.Tasks.add(task)
-    res.send(saved)
+    res.send();
 });
 
 app.use(tasksRouter)
