@@ -22,8 +22,10 @@ export class TaskModel {
   archivedAt: Date
   @Column("datetime",{ nullable: true })
   deletedAt: Date
-  @Column("varchar", {  default: 'q1' })
+  @Column("varchar", { default: 'q1' })
   queue: string
+  @Column("int", { default: 1 })
+  estimate: number
   @Column("varchar")
   title: string
   @Column("text", {  default: '' })
@@ -91,7 +93,7 @@ export class TaskView extends Decorator<TaskModel> implements TaskModel {
           </button>
       </form>
       <a id="${this.id}" ${modal.toggleParams()}>
-          <b>${this.title}</b>
+          <b>${this.title}</b> (${this.estimate || 1})
           <div>${converter.makeHtml(this.description)}</div>
       </a>
       ${modal}`
@@ -107,11 +109,15 @@ export class TaskForm extends Decorator<Partial<TaskModel>> implements Partial<T
         <input hidden name="id" type="text" class="form-control" id="id" ${valueIfExists(this.id)}>
         <div class="form-group">
             <label for="title" class="form-label">Title</label>
-            <input name="title" type="text" class="form-control" id="title"  ${valueIfExists(this.title)}>
+            <input name="title" type="text" class="form-control" id="title" ${valueIfExists(this.title)}>
         </div>
         <div class="form-group">
             <label for="queue" class="form-label">Priority</label>
-            <input name="queue" type="text" class="form-control" id="queue"  ${valueIfExists(this.queue)}>
+            <input name="queue" type="text" class="form-control" id="queue" ${valueIfExists(this.queue)}>
+        </div>
+        <div class="form-group">
+            <label for="estimate" class="form-label">Estimate</label>
+            <input name="estimate" type="number" class="form-control" id="estimate" value=${this.estimate || 1}>
         </div>
         <div class="form-group">
             <label for="description" class="form-label">Description</label>

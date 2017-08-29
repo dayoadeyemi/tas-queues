@@ -117,5 +117,97 @@ tasksRouter.post('/github/:username', async (req, res) => {
     res.send();
 });
 
+tasksRouter.post('/slack', async (req, res) => {
+    if (req.body.payload) {
+        const {
+            actions,
+            callback_id: id,
+            user: {
+                name: username
+            },
+            original_message
+        } = JSON.parse(req.body.payload)
+        const updates = actions.reduce((memo, action) => {
+            memo[action.name] = action.selected_options[0].value
+            return memo
+        }, {})
+        await req.Tasks.update({ id }, updates)
+        res.send(original_message);
+    } else {
+        const {
+            user_id: userId,
+            user_name: username,
+            text,
+        } = req.body
+        
+        if (text === '') {
+            const tasks = await req.Tasks.list()
+            return res.send({
+                text: 'View the list at - ' + req.hostname + '\n\n' + tasks.sort(({ queue: q1, priority: p1 }, { queue: q2, priority: p2 }) => {
+                    return q1 > q2 ? 1 : q1 < q2 ? -1 : p2 - p1
+                }).map(task => `*${task.queue.toUpperCase()||'Not Prioritised'} | ${task.title}*\n${task.description}\n`).join('\n')
+            })
+        }
+        const saved = await req.Tasks.add(new TaskModel({
+            title: `slack task from ${username}`,
+            description: text,
+        }))
+        res.send({
+            "response_type": "in_channel",
+            "attachments": [
+                {
+                    "callback_id": saved.id,
+                    "attachment_type": "default",
+                    "pretext": "The task has been added successfully!\nYou can set the priority here and estimate here",
+                    "actions": [
+                        {
+                            "name": "queue",
+                            "text": "Change Priority",
+                            "type": "select",
+                            "options": [
+                                {
+                                    "text": "High",
+                                    "value": "p1"
+                                },
+                                {
+                                    "text": "Standard",
+                                    "value": "q2"
+                                },
+                                {
+                                    "text": "Low",
+                                    "value": "q3"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "estimate",
+                            "text": "How complex is this task?",
+                            "type": "select",
+                            "options": [
+                                {
+                                    "text": "1",
+                                    "value": 1
+                                },
+                                {
+                                    "text": "2",
+                                    "value": 2
+                                },
+                                {
+                                    "text": "3",
+                                    "value": 3
+                                },
+                                {
+                                    "text": "5",
+                                    "value": 5
+                                },
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+    }
+})
+
 app.use(tasksRouter)
 app.listen(3000);

@@ -10,9 +10,11 @@ export interface QueueView extends QueueModel {}
 export class QueueView implements QueueModel {
     name: string
     tasks: TaskView[]
+    estimate: number
     constructor(queue: QueueModel, private state?: 'report'){
         this.name = queue.name
         this.tasks = queue.tasks.map(task => new TaskView(task))
+        this.estimate = queue.tasks.reduce((total, task) => total + task.estimate, 0)
     }
     toString = () => {
         return `
@@ -25,7 +27,7 @@ export class QueueView implements QueueModel {
                             </h5>
                         </div>
                         <div class="col text-right">
-                            <span>${this.tasks.length} ${this.state === 'report'? 'completed' : 'outstanding'} tasks </span>
+                            <span>${this.tasks.length} task${this.tasks.length === 1 ? '' :'s'} (${this.estimate} point${this.estimate === 1 ? '' :'s'})</span>
                         </div>
                     </div>
                     
