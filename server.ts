@@ -145,7 +145,7 @@ tasksRouter.post('/slack', async (req, res) => {
             return res.send({
                 text: 'View the list at - ' + req.hostname + '\n\n' + tasks.sort(({ queue: q1, priority: p1 }, { queue: q2, priority: p2 }) => {
                     return q1 > q2 ? 1 : q1 < q2 ? -1 : p2 - p1
-                }).map(task => `*${task.queue.toUpperCase()||'Not Prioritised'} | ${task.title}*\n${task.description}\n`).join('\n')
+                }).map(task => `*${task.queue.toUpperCase()||'Not Prioritised'} | ${task.title} (${task.estimate}) *\n${task.description}\n`).join('\n')
             })
         }
         const saved = await req.Tasks.add(new TaskModel({
