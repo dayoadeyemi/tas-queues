@@ -259,8 +259,16 @@ userRouter.get('/users', (req, res, next) => __awaiter(this, void 0, void 0, fun
     res.send(users.map(({ id, username, slackUserId, githubUserName }) => ({ id, username, slackUserId, githubUserName })));
 }));
 userRouter.use('/users/:userid', tasksApi);
+function errorHandler(err, req, res, next) {
+    if (res.headersSent) {
+        return next(err);
+    }
+    res.status(500);
+    res.send(err && err.stack);
+}
 app.use(integrationsApi);
 app.use(tasksRouter);
 app.use(userRouter);
+app.use(errorHandler);
 app.listen(process.env.PORT || 3000);
 //# sourceMappingURL=server.js.map

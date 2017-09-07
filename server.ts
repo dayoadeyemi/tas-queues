@@ -296,7 +296,16 @@ userRouter.get('/users', async (req, res, next) => {
 })
 userRouter.use('/users/:userid', tasksApi)
 
+function errorHandler (err, req, res, next) {
+    if (res.headersSent) {
+        return next(err)
+    }
+    res.status(500)
+    res.send(err && err.stack)
+}
+
 app.use(integrationsApi)
 app.use(tasksRouter)
 app.use(userRouter)
+app.use(errorHandler)
 app.listen(process.env.PORT || 3000);
