@@ -57,7 +57,7 @@ tasksRouter.use(async (req, res, next) => {
     } else {
         res.statusCode = 401
         res.setHeader('WWW-Authenticate', 'Basic realm="example"')
-        res.end('Access denied')
+        res.redirect('/sign-up')
     }
 })
 tasksRouter.get('/', async (req, res) => {
@@ -68,7 +68,6 @@ tasksRouter.get('/', async (req, res) => {
 })
 
 tasksRouter.get('/tasks/updates', async (req, res) => {
-    // const tasks = await connection.manager.find(Task)
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',

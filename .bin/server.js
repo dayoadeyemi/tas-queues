@@ -52,7 +52,7 @@ tasksRouter.use((req, res, next) => __awaiter(this, void 0, void 0, function* ()
     else {
         res.statusCode = 401;
         res.setHeader('WWW-Authenticate', 'Basic realm="example"');
-        res.end('Access denied');
+        res.redirect('/sign-up');
     }
 }));
 tasksRouter.get('/', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -61,7 +61,6 @@ tasksRouter.get('/', (req, res) => __awaiter(this, void 0, void 0, function* () 
     res.send(AppShell(Home_1.HomeView(req.user, tasks, report ? 'report' : null)));
 }));
 tasksRouter.get('/tasks/updates', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    // const tasks = await connection.manager.find(Task)
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
