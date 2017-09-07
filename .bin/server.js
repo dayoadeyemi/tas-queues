@@ -267,8 +267,8 @@ function errorHandler(err, req, res, next) {
     res.send(err && err.stack);
 }
 app.use(integrationsApi);
-app.use(tasksRouter);
 app.use(userRouter);
+app.use(tasksRouter);
 app.use(errorHandler);
 app.listen(process.env.PORT || 3000);
 //# sourceMappingURL=server.js.map

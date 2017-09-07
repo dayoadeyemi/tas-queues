@@ -305,7 +305,7 @@ function errorHandler (err, req, res, next) {
 }
 
 app.use(integrationsApi)
-app.use(tasksRouter)
 app.use(userRouter)
+app.use(tasksRouter)
 app.use(errorHandler)
 app.listen(process.env.PORT || 3000);
