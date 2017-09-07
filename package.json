@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "postinstall": "npm run build",
     "start": "node .bin/server.js",
     "manager": "node .bin/manager.js"
   },
