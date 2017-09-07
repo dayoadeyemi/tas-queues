@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { TaskModel } from './Task'
-import { UserModel, SignUpForm } from './Users'
+import { UserModel, SignUpForm, SignInForm } from './Users'
 import { HomeView } from './Home'
 import { IssuesEvent } from './GitHub'
 import * as controllers from './Controllers/'
@@ -8,6 +8,7 @@ import * as express from 'express'
 import { urlencoded, json } from 'body-parser'
 import * as router from 'express-promise-router';
 import * as cookieParser from 'cookie-parser';
+import * as session  from 'express-session';
 import * as auth from 'basic-auth'
 
 declare global {
@@ -23,6 +24,17 @@ declare global {
 
 const app = express();
 app.use(cookieParser())
+app.use(session({
+    saveUninitialized: false,
+    resave: true,
+    secret: 'somerandonstuffs',
+    cookie: {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 600000
+    }
+}));
 app.use(urlencoded({ extended: true }))
 app.use(json({  }))
 app.use(express.static('public'))
@@ -48,17 +60,14 @@ const AppShell = (body: string) => `
 `
 const tasksRouter = router() as express.Router
 tasksRouter.use(async (req, res, next) => {
-    const credentials = auth(req)
-    const user = credentials && await req.controllers.users.verify(credentials.name, credentials.pass)
-    
-    if (user) {
-        req.user = user
-        next()
-    } else {
-        res.statusCode = 401
-        res.setHeader('WWW-Authenticate', 'Basic realm="example"')
-        res.redirect('/sign-up')
+    if (req.session) {
+        req.user = await req.controllers.users.getById(req.session.userId)
     }
+    if (req.user) {
+        return next()
+    }
+    res.statusCode = 401
+    res.redirect('/sign-in')
 })
 tasksRouter.get('/', async (req, res) => {
     const { report } = req.query 
@@ -271,7 +280,17 @@ userRouter.get('/sign-up', async (req, res, next) => {
 })
 userRouter.post('/sign-up', async (req, res, next) => {
     const { username, password } = req.body
-    await req.controllers.users.create(username, password)
+    const user = await req.controllers.users.create(username, password)
+    req.session.userId = user.id
+    res.redirect('/')
+})
+userRouter.get('/sign-in', async (req, res, next) => {
+    res.send(AppShell(SignInForm()))
+})
+userRouter.post('/sign-in', async (req, res, next) => {
+    const { username, password } = req.body
+    const user = await req.controllers.users.verify(username, password)
+    req.session.userId = user.id
     res.redirect('/')
 })
 

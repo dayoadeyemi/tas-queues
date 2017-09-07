@@ -80,7 +80,6 @@ export class TaskController {
       task.priority = highest ? highest.priority + 1 : 0
     }
     const saved = await (await this.connection).manager.save(task)
-    console.log(saved)
     this.events.emit('/tasks', saved);
     return saved
   }

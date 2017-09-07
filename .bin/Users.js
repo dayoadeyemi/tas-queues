@@ -75,6 +75,12 @@ class UserController {
                 .manager.updateById(UserModel, userId, settings);
         });
     }
+    getById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield (yield this.connection)
+                .manager.findOne(UserModel, { id });
+        });
+    }
     getByGitHubUserName(githubUserName) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield (yield this.connection)
@@ -90,6 +96,15 @@ class UserController {
 }
 exports.UserController = UserController;
 exports.SignUpForm = () => FormUtils_1.Form({
+    action: '/sign-up',
+    children: [
+        FormUtils_1.Input({ type: 'text', id: 'username', name: 'Username' }),
+        FormUtils_1.Input({ type: 'password', id: 'password', name: 'Password' }),
+        FormUtils_1.Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
+        FormUtils_1.Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
+    ],
+});
+exports.SignInForm = () => FormUtils_1.Form({
     action: '/sign-up',
     children: [
         FormUtils_1.Input({ type: 'text', id: 'username', name: 'Username' }),

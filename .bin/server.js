@@ -17,9 +17,20 @@ const express = require("express");
 const body_parser_1 = require("body-parser");
 const router = require("express-promise-router");
 const cookieParser = require("cookie-parser");
-const auth = require("basic-auth");
+const session = require("express-session");
 const app = express();
 app.use(cookieParser());
+app.use(session({
+    saveUninitialized: false,
+    resave: true,
+    secret: 'somerandonstuffs',
+    cookie: {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 600000
+    }
+}));
 app.use(body_parser_1.urlencoded({ extended: true }));
 app.use(body_parser_1.json({}));
 app.use(express.static('public'));
@@ -43,17 +54,14 @@ const AppShell = (body) => `
 `;
 const tasksRouter = router();
 tasksRouter.use((req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    const credentials = auth(req);
-    const user = credentials && (yield req.controllers.users.verify(credentials.name, credentials.pass));
-    if (user) {
-        req.user = user;
-        next();
+    if (req.session) {
+        req.user = yield req.controllers.users.getById(req.session.userId);
     }
-    else {
-        res.statusCode = 401;
-        res.setHeader('WWW-Authenticate', 'Basic realm="example"');
-        res.redirect('/sign-up');
+    if (req.user) {
+        return next();
     }
+    res.statusCode = 401;
+    res.redirect('/sign-in');
 }));
 tasksRouter.get('/', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const { report } = req.query;
@@ -243,7 +251,17 @@ userRouter.get('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, f
 }));
 userRouter.post('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;
-    yield req.controllers.users.create(username, password);
+    const user = yield req.controllers.users.create(username, password);
+    req.session.userId = user.id;
+    res.redirect('/');
+}));
+userRouter.get('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    res.send(AppShell(Users_1.SignInForm()));
+}));
+userRouter.post('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    const { username, password } = req.body;
+    const user = yield req.controllers.users.verify(username, password);
+    req.session.userId = user.id;
     res.redirect('/');
 }));
 userRouter.post('/users', (req, res, next) => __awaiter(this, void 0, void 0, function* () {

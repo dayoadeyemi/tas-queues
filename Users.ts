@@ -56,6 +56,10 @@ export class UserController {
     return await (await this.connection)
     .manager.updateById(UserModel, userId, settings)
   }
+  async getById(id: string){
+    return await (await this.connection)
+    .manager.findOne(UserModel, { id })
+  }
   async getByGitHubUserName(githubUserName: string){
     return await (await this.connection)
     .manager.findOne(UserModel, { githubUserName })
@@ -67,6 +71,15 @@ export class UserController {
 }
 
 export const SignUpForm = () => Form({
+  action: '/sign-up',
+  children: [
+    Input({ type: 'text', id: 'username', name: 'Username' }),
+    Input({ type: 'password', id: 'password', name: 'Password' }),
+    Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
+    Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
+  ],
+})
+export const SignInForm = () => Form({
   action: '/sign-up',
   children: [
     Input({ type: 'text', id: 'username', name: 'Username' }),
