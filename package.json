@@ -10,6 +10,9 @@
     "start": "node .bin/server.js",
     "manager": "node .bin/manager.js"
   },
+  "engines": {
+    "node": "8.2.1"
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {
