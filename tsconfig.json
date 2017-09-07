@@ -3,6 +3,7 @@
         "outDir": ".bin",
         "module": "commonjs",
         "target": "es6",
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "sourceMap": true
     }
 }

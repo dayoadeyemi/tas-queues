@@ -9,14 +9,13 @@ export interface QueueModel {
 export interface QueueView extends QueueModel {}
 export class QueueView implements QueueModel {
     name: string
-    tasks: TaskView[]
-    estimate: number
+    tasks: TaskModel[]
     constructor(queue: QueueModel, private state?: 'report'){
         this.name = queue.name
-        this.tasks = queue.tasks.map(task => new TaskView(task))
-        this.estimate = queue.tasks.reduce((total, task) => total + task.estimate, 0)
+        this.tasks = queue.tasks
     }
     toString = () => {
+        const estimate = this.tasks.reduce((total, task) => total + task.estimate, 0)
         return `
             <div class="card">
                 <div class="card-header" role="tab" id="heading-${this.name}">
@@ -27,7 +26,7 @@ export class QueueView implements QueueModel {
                             </h5>
                         </div>
                         <div class="col text-right">
-                            <span>${this.tasks.length} task${this.tasks.length === 1 ? '' :'s'} (${this.estimate} point${this.estimate === 1 ? '' :'s'})</span>
+                            <span>${this.tasks.length} task${this.tasks.length === 1 ? '' :'s'} (${estimate} point${estimate === 1 ? '' :'s'})</span>
                         </div>
                     </div>
                     
@@ -35,7 +34,7 @@ export class QueueView implements QueueModel {
             </div>
             <div id="${this.name}-content" class="collapse show" role="tabpanel" aria-labelledby="heading-${this.name}">
                 <div class="card-body">
-                    ${new ListView(this.tasks)}
+                    ${new ListView(this.tasks.map(TaskView))}
                 </div>
             </div>
         `
