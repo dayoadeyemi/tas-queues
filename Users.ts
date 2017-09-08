@@ -49,7 +49,9 @@ export class UserController {
       username: settings.username,
       slackUserId: settings.slackUserId,
       githubUserName: settings.githubUserName,
-      hash, salt }))
+      hash,
+      salt
+    }))
   }
   async verify(username: string, password: string){
     const user = await (await this.connection)

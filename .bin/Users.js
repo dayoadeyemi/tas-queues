@@ -64,7 +64,8 @@ class UserController {
                 username: settings.username,
                 slackUserId: settings.slackUserId,
                 githubUserName: settings.githubUserName,
-                hash, salt
+                hash,
+                salt
             }));
         });
     }
