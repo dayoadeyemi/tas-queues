@@ -7,7 +7,7 @@ export const pConnection = createConnection(Object.assign({
     entities: [TaskModel, UserModel],
     autoSchemaSync: true,
     logging: []
-}, process.env.NODE_ENV === 'development' ? {
+}, process.env.NODE_ENV !== 'development' ? {
     type: 'postgres' as 'postgres',
     url: process.env.DATABASE_URL
 } : {

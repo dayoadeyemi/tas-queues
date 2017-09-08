@@ -8,7 +8,7 @@ exports.pConnection = typeorm_1.createConnection(Object.assign({
     entities: [Task_1.TaskModel, Users_1.UserModel],
     autoSchemaSync: true,
     logging: []
-}, process.env.NODE_ENV === 'development' ? {
+}, process.env.NODE_ENV !== 'development' ? {
     type: 'postgres',
     url: process.env.DATABASE_URL
 } : {
