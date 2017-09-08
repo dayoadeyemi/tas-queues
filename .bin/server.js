@@ -267,6 +267,9 @@ userRouter.get('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, f
 userRouter.post('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;
     const user = yield req.controllers.users.verify(username, password);
+    if (!user) {
+        res.redirect('/sign-up');
+    }
     req.session.userId = user.id;
     res.redirect('/');
 }));

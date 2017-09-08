@@ -297,6 +297,9 @@ userRouter.get('/sign-in', async (req, res, next) => {
 userRouter.post('/sign-in', async (req, res, next) => {
     const { username, password } = req.body
     const user = await req.controllers.users.verify(username, password)
+    if (!user) {
+        res.redirect('/sign-up')
+    }
     req.session.userId = user.id
     res.redirect('/')
 })
