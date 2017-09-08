@@ -10,6 +10,7 @@ import * as router from 'express-promise-router';
 import * as cookieParser from 'cookie-parser';
 import * as session  from 'express-session';
 import * as auth from 'basic-auth'
+import { v4 } from 'uuid'
 
 declare global {
     namespace Express {
@@ -122,6 +123,14 @@ tasksRouter.get('/tasks', async (req, res) => {
     else res.send(tasks)
 });
 
+const base256 = (n) => {
+    const out = [];
+    for (let i = 0; i < 16; i++) {
+        out.push(n%256)
+        n>>=8
+    }
+    return out;
+}
 
 const integrationsApi = (router() as express.Router)
 integrationsApi.post('/github', async (req, res) => {
@@ -132,7 +141,7 @@ integrationsApi.post('/github', async (req, res) => {
             .getByGitHubUserName(issuesEvent.assignee.login)
             if (req.user){
                 const task = new TaskModel({
-                    id: 'github:' + issuesEvent.issue.id,
+                    id: v4({ random: base256(issuesEvent.issue.id) }),
                     queue: 'q1',
                     title: issuesEvent.issue.title,
                     description: issuesEvent.issue.body

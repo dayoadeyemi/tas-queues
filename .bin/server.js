@@ -18,6 +18,7 @@ const body_parser_1 = require("body-parser");
 const router = require("express-promise-router");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const uuid_1 = require("uuid");
 const app = express();
 app.use(cookieParser());
 app.use(session({
@@ -114,6 +115,14 @@ tasksRouter.get('/tasks', (req, res) => __awaiter(this, void 0, void 0, function
     else
         res.send(tasks);
 }));
+const base256 = (n) => {
+    const out = [];
+    for (let i = 0; i < 16; i++) {
+        out.push(n % 256);
+        n >>= 8;
+    }
+    return out;
+};
 const integrationsApi = router();
 integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const issuesEvent = req.body;
@@ -123,7 +132,7 @@ integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, fu
                 .getByGitHubUserName(issuesEvent.assignee.login);
             if (req.user) {
                 const task = new Task_1.TaskModel({
-                    id: 'github:' + issuesEvent.issue.id,
+                    id: uuid_1.v4({ random: base256(issuesEvent.issue.id) }),
                     queue: 'q1',
                     title: issuesEvent.issue.title,
                     description: issuesEvent.issue.body
