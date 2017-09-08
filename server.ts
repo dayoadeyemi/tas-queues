@@ -133,6 +133,7 @@ integrationsApi.post('/github', async (req, res) => {
             if (req.user){
                 const task = new TaskModel({
                     id: 'github:' + issuesEvent.issue.id,
+                    queue: 'q1',
                     title: issuesEvent.issue.title,
                     description: issuesEvent.issue.body
                 })
@@ -197,10 +198,10 @@ integrationsApi.post('/slack', async (req, res) => {
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`)
         
         const saved = await req.controllers.tasks.add(req.user.id, new TaskModel({
+            queue: 'q1',
             title: `slack task from ${username}`,
             description: body,
         }))
-        console.log(saved)
         
         res.send({
             "response_type": "in_channel",
