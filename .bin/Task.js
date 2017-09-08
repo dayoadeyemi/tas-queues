@@ -21,13 +21,6 @@ const FormUtils_1 = require("./FormUtils");
 const events_1 = require("events");
 const showdown_1 = require("showdown");
 let TaskModel = class TaskModel extends Decorator_1.Decorator {
-    constructor() {
-        super(...arguments);
-        this.queue = 'q1';
-        this.estimate = 1;
-        this.title = '';
-        this.description = '';
-    }
 };
 __decorate([
     typeorm_1.PrimaryGeneratedColumn("uuid")

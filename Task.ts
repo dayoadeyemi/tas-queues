@@ -21,18 +21,18 @@ export class TaskModel extends Decorator<Partial<TaskModel>>{
   priority: number
   @CreateDateColumn("CURRENT_TIMESTAMP(6)")
   createdAt: Date
-  @Column("timestamp",{ nullable: true })
+  @Column("timestamp", { nullable: true })
   archivedAt: Date
-  @Column("timestamp",{ nullable: true })
+  @Column("timestamp", { nullable: true })
   deletedAt: Date
   @Column("varchar", { default: 'q1' })
-  queue: string = 'q1'
+  queue: string
   @Column("int", { default: 1 })
-  estimate: number = 1
+  estimate: number
   @Column("varchar", {  default: '' })
-  title: string = ''
+  title: string
   @Column("text", {  default: '' })
-  description: string = ''
+  description: string
 }
 
 export class TaskController {
