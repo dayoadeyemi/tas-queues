@@ -55,12 +55,17 @@ class UserController {
     constructor(connection) {
         this.connection = connection;
     }
-    create(username, password) {
+    create(settings, password) {
         return __awaiter(this, void 0, void 0, function* () {
             const salt = yield new Promise((resolve, reject) => crypto_1.randomBytes(16, (err, buf) => err ? reject(err) : resolve(buf.toString('utf8'))));
             const hash = yield hashpass(password, salt);
             return yield (yield this.connection)
-                .manager.save(new UserModel({ username, hash, salt }));
+                .manager.save(new UserModel({
+                username: settings.username,
+                slackUserId: settings.slackUserId,
+                githubUserName: settings.githubUserName,
+                hash, salt
+            }));
         });
     }
     verify(username, password) {

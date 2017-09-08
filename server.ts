@@ -286,8 +286,17 @@ userRouter.get('/sign-up', async (req, res, next) => {
     res.send(AppShell(NavBar() + Container(SignUpForm())))
 })
 userRouter.post('/sign-up', async (req, res, next) => {
-    const { username, password } = req.body
-    const user = await req.controllers.users.create(username, password)
+    const {
+        username,
+        slackUserId,
+        githubUserName,
+        password,
+    } = req.body
+    const user = await req.controllers.users.create({
+        username,
+        slackUserId,
+        githubUserName,
+    }, password)
     req.session.userId = user.id
     res.redirect('/')
 })

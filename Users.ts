@@ -32,7 +32,11 @@ const slowEquals = (a: string, b: string) => {
 }
 export class UserController {
   constructor(private connection: Promise<Connection>){}
-  async create(username: string, password: string){
+  async create(settings: {
+    username:string,
+    slackUserId: string,
+    githubUserName: string
+  }, password: string){
 
     const salt = await new Promise<string>((resolve, reject) =>
       randomBytes(16, (err, buf) =>
@@ -41,7 +45,11 @@ export class UserController {
     const hash = await hashpass(password, salt)
     
     return await (await this.connection)
-    .manager.save(new UserModel({ username, hash, salt }))
+    .manager.save(new UserModel({
+      username: settings.username,
+      slackUserId: settings.slackUserId,
+      githubUserName: settings.githubUserName,
+      hash, salt }))
   }
   async verify(username: string, password: string){
     const user = await (await this.connection)
