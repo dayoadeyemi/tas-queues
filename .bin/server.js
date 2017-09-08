@@ -156,6 +156,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             });
         }
         const [_, slackUserId, slackUserName, body_unclean] = match;
+        console.log(match);
         req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
         if (!req.user) {
             res.send({
