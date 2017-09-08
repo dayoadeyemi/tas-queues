@@ -21,9 +21,9 @@ export class TaskModel extends Decorator<Partial<TaskModel>>{
   priority: number
   @CreateDateColumn("CURRENT_TIMESTAMP(6)")
   createdAt: Date
-  @Column("datetime",{ nullable: true })
+  @Column("timestamp",{ nullable: true })
   archivedAt: Date
-  @Column("datetime",{ nullable: true })
+  @Column("timestamp",{ nullable: true })
   deletedAt: Date
   @Column("varchar", { default: 'q1' })
   queue: string = 'q1'

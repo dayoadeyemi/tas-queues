@@ -42,10 +42,10 @@ __decorate([
     typeorm_1.CreateDateColumn("CURRENT_TIMESTAMP(6)")
 ], TaskModel.prototype, "createdAt", void 0);
 __decorate([
-    typeorm_1.Column("datetime", { nullable: true })
+    typeorm_1.Column("timestamp", { nullable: true })
 ], TaskModel.prototype, "archivedAt", void 0);
 __decorate([
-    typeorm_1.Column("datetime", { nullable: true })
+    typeorm_1.Column("timestamp", { nullable: true })
 ], TaskModel.prototype, "deletedAt", void 0);
 __decorate([
     typeorm_1.Column("varchar", { default: 'q1' })
