@@ -156,7 +156,6 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             });
         }
         const [_, slackUserId, slackUserName, body_unclean] = match;
-        console.log(match);
         req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
         if (!req.user) {
             res.send({
@@ -177,6 +176,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             title: `slack task from ${username}`,
             description: body,
         }));
+        console.log(saved);
         res.send({
             "response_type": "in_channel",
             "attachments": [
