@@ -24,10 +24,12 @@ declare global {
 
 const app = express();
 app.use(cookieParser())
+app.enable('trust proxy')
 app.use(session({
     saveUninitialized: false,
     resave: true,
     secret: 'somerandonstuffs',
+    proxy : process.env.NODE_ENV === 'production',
     cookie: {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
