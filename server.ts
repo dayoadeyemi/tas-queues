@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { TaskModel } from './Task'
 import { UserModel, SignUpForm, SignInForm } from './Users'
-import { HomeView } from './Home'
+import { HomeView, NavBar } from './Home'
 import { IssuesEvent } from './GitHub'
 import * as controllers from './Controllers/'
 import * as express from 'express'
@@ -58,6 +58,13 @@ const AppShell = (body: string) => `
     </body>
 </html>
 `
+
+const Container = (content) => `
+<div class="container">
+    <div class="row">
+        ${content}
+    </div>
+</div>`
 const tasksRouter = router() as express.Router
 tasksRouter.use(async (req, res, next) => {
     if (req.session) {
@@ -276,7 +283,7 @@ tasksApi.post('/tasks/:id/archive', async (req, res) => {
 
 const userRouter = router() as express.Router
 userRouter.get('/sign-up', async (req, res, next) => {
-    res.send(AppShell(SignUpForm()))
+    res.send(AppShell(NavBar() + Container(SignUpForm())))
 })
 userRouter.post('/sign-up', async (req, res, next) => {
     const { username, password } = req.body
@@ -285,7 +292,7 @@ userRouter.post('/sign-up', async (req, res, next) => {
     res.redirect('/')
 })
 userRouter.get('/sign-in', async (req, res, next) => {
-    res.send(AppShell(SignInForm()))
+    res.send(AppShell(NavBar() + Container(SignInForm())))
 })
 userRouter.post('/sign-in', async (req, res, next) => {
     const { username, password } = req.body

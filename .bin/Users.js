@@ -30,7 +30,8 @@ __decorate([
     typeorm_1.Column("varchar", { nullable: true })
 ], UserModel.prototype, "githubUserName", void 0);
 __decorate([
-    typeorm_1.Column("varchar")
+    typeorm_1.Column("varchar"),
+    typeorm_1.Index({ unique: true })
 ], UserModel.prototype, "username", void 0);
 __decorate([
     typeorm_1.Column("varchar")
@@ -105,7 +106,7 @@ exports.SignUpForm = () => FormUtils_1.Form({
     ],
 });
 exports.SignInForm = () => FormUtils_1.Form({
-    action: '/sign-up',
+    action: '/sign-in',
     children: [
         FormUtils_1.Input({ type: 'text', id: 'username', name: 'Username' }),
         FormUtils_1.Input({ type: 'password', id: 'password', name: 'Password' }),

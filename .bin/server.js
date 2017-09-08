@@ -52,6 +52,12 @@ const AppShell = (body) => `
     </body>
 </html>
 `;
+const Container = (content) => `
+<div class="container">
+    <div class="row">
+        ${content}
+    </div>
+</div>`;
 const tasksRouter = router();
 tasksRouter.use((req, res, next) => __awaiter(this, void 0, void 0, function* () {
     if (req.session) {
@@ -247,7 +253,7 @@ tasksApi.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0
 }));
 const userRouter = router();
 userRouter.get('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    res.send(AppShell(Users_1.SignUpForm()));
+    res.send(AppShell(Home_1.NavBar() + Container(Users_1.SignUpForm())));
 }));
 userRouter.post('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;
@@ -256,7 +262,7 @@ userRouter.post('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, 
     res.redirect('/');
 }));
 userRouter.get('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    res.send(AppShell(Users_1.SignInForm()));
+    res.send(AppShell(Home_1.NavBar() + Container(Users_1.SignInForm())));
 }));
 userRouter.post('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;

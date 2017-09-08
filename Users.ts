@@ -12,6 +12,7 @@ export class UserModel extends Decorator<Partial<UserModel>> {
   @Column("varchar", { nullable: true })
   githubUserName: string
   @Column("varchar")
+  @Index({ unique: true })
   username: string
   @Column("varchar")
   hash: string
@@ -80,7 +81,7 @@ export const SignUpForm = () => Form({
   ],
 })
 export const SignInForm = () => Form({
-  action: '/sign-up',
+  action: '/sign-in',
   children: [
     Input({ type: 'text', id: 'username', name: 'Username' }),
     Input({ type: 'password', id: 'password', name: 'Password' }),
