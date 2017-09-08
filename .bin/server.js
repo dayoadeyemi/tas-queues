@@ -20,7 +20,6 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const app = express();
 app.use(cookieParser());
-app.enable('trust proxy');
 app.use(session({
     saveUninitialized: false,
     resave: true,
