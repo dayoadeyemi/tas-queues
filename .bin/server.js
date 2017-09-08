@@ -25,10 +25,8 @@ app.use(session({
     saveUninitialized: false,
     resave: true,
     secret: 'somerandonstuffs',
-    proxy: process.env.NODE_ENV === 'production',
     cookie: {
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 600000
     }
