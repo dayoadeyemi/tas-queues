@@ -327,7 +327,7 @@ integrationsApi.get('/slack/authorize', async (req, res) => {
     if (code && state) {
         const [route, slackOauthState] = state.split(';')
         const user = await req.controllers.users.getBySlackOathState(slackOauthState)
-        console.log(req.user)
+        console.log(user)
         if (user) {
             const access = await getContent<{
                 ok: boolean
