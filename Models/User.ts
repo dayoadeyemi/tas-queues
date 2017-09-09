@@ -8,6 +8,11 @@ export default class UserModel extends Decorator<Partial<UserModel>> {
   @Column("varchar", { nullable: true })
   slackUserId: string
   @Column("varchar", { nullable: true })
+  @Index({ unique: true })
+  slackOauthState: string
+  @Column("varchar", { nullable: true })
+  slackAccessToken: string
+  @Column("varchar", { nullable: true })
   githubUserName: string
   @Column("varchar")
   @Index({ unique: true })

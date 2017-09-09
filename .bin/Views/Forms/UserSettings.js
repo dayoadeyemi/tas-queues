@@ -11,11 +11,6 @@ exports.SettingsForm = (user) => Utils_1.Form({
             value: user.username
         }),
         Utils_1.Input({ type: 'text',
-            id: 'slackUserId',
-            name: 'Slack User Id',
-            value: user.slackUserId
-        }),
-        Utils_1.Input({ type: 'text',
             id: 'githubUserName',
             name: 'Github Username',
             value: user.githubUserName

@@ -18,13 +18,14 @@ const slowEquals = (a, b) => {
     }
     return diff === 0;
 };
+const randomBytesAsync = (n) => new Promise((resolve, reject) => crypto_1.randomBytes(n, (err, buf) => err ? reject(err) : resolve(buf.toString('base64'))));
 class UserController {
     constructor(connection) {
         this.connection = connection;
     }
     create(settings, password) {
         return __awaiter(this, void 0, void 0, function* () {
-            const salt = yield new Promise((resolve, reject) => crypto_1.randomBytes(16, (err, buf) => err ? reject(err) : resolve(buf.toString('utf8'))));
+            const salt = yield randomBytesAsync(16);
             const hash = yield hashpass(password, salt);
             return yield (yield this.connection)
                 .manager.save(new User_1.default({
@@ -59,6 +60,20 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             return yield (yield this.connection)
                 .manager.findOne(User_1.default, { githubUserName });
+        });
+    }
+    createSlackOathState(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const slackOauthState = yield randomBytesAsync(16);
+            yield (yield this.connection)
+                .manager.updateById(User_1.default, id, { slackOauthState });
+            return slackOauthState;
+        });
+    }
+    getBySlackOathState(slackOauthState) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield (yield this.connection)
+                .manager.findOne(User_1.default, { slackOauthState });
         });
     }
     getBySlackUserId(slackUserId) {

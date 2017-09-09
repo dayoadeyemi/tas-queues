@@ -22,6 +22,28 @@ const router = require("express-promise-router");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const uuid_1 = require("uuid");
+const qs_1 = require("qs");
+const getContent = function (url) {
+    // return new pending promise
+    return new Promise((resolve, reject) => {
+        // select http or https module, depending on reqested url
+        const lib = url.startsWith('https') ? require('https') : require('http');
+        const request = lib.get(url, (response) => {
+            // handle http errors
+            if (response.statusCode < 200 || response.statusCode > 299) {
+                reject(new Error('Failed to load page, status code: ' + response.statusCode));
+            }
+            // temporary data holder
+            const body = [];
+            // on every content chunk, push it to the data array
+            response.on('data', (chunk) => body.push(chunk));
+            // we are done, resolve promise with those joined chunks
+            response.on('end', () => resolve(JSON.parse(body.join(''))));
+        });
+        // handle connection errors of the request
+        request.on('error', (err) => reject(err));
+    });
+};
 const app = express();
 app.use(cookieParser());
 app.use(session({
@@ -69,7 +91,7 @@ const getYesterdayString = () => {
 tasksRouter.get('/report', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const { after } = req.query;
     if (!after) {
-        res.redirect('/report?after=' + getYesterdayString());
+        return res.redirect('/report?after=' + getYesterdayString());
     }
     const tasks = yield req.controllers.tasks.report(req.user.id, after);
     res.send(Report_1.default(req.user, tasks));
@@ -96,6 +118,14 @@ tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, func
         res.redirect('/');
     else
         res.sendStatus(204).end();
+}));
+tasksRouter.post('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const slackOauthState = yield req.controllers.users.createSlackOathState(req.user.id);
+    res.redirect('https://slack.com/oauth/authorize?' + qs_1.stringify({
+        client_id: process.env.SLACK_CLIENT_ID,
+        scope: 'identity.basic',
+        state: slackOauthState
+    }));
 }));
 tasksRouter.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0, function* () {
     yield req.controllers.tasks.archive(req.user.id, req.params.id);
@@ -148,6 +178,17 @@ integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, fu
             break;
     }
     res.send();
+}));
+controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, function* () {
+    const user = yield controllers.users.getById(task.userId);
+    if (user && user.slackUserId && user.slackAccessToken) {
+        const reponse = yield getContent('https://slack.com/api/users.profile.set?' + qs_1.stringify({
+            token: user.slackAccessToken,
+            name: 'status_text',
+            user: user.slackUserId,
+            value: task.title
+        }));
+    }
 }));
 integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, function* () {
     if (req.body.payload) {
@@ -245,6 +286,28 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             ]
         });
     }
+}));
+integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const { code, state } = req.query;
+    if (code && state) {
+        const [route, slackOauthState] = state.split(';');
+        const user = yield req.controllers.users.getBySlackOathState(slackOauthState);
+        if (user) {
+            const access = yield getContent('https://slack.com/api/oauth.access?' + qs_1.stringify({
+                client_id: process.env.SLACK_CLIENT_ID,
+                client_secret: process.env.SLACK_CLIENT_SECRET,
+                code,
+            }));
+            if (access.ok) {
+                yield req.controllers.users.updateSettings(user.id, {
+                    slackAccessToken: access.access_token,
+                    slackOauthState: null,
+                    slackUserId: access.user.id
+                });
+            }
+        }
+    }
+    return res.redirect('/settings');
 }));
 const userRouter = router();
 userRouter.get('/home', (req, res, next) => __awaiter(this, void 0, void 0, function* () {

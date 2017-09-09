@@ -13,6 +13,12 @@ const slowEquals = (a: string, b: string) => {
     }
     return diff === 0;
 }
+
+const randomBytesAsync = (n: number) =>
+  new Promise<string>((resolve, reject) =>
+        randomBytes(n, (err, buf) =>
+          err ? reject(err) : resolve(buf.toString('base64'))))
+
 export default class UserController {
   constructor(private connection: Promise<Connection>){}
   async create(settings: {
@@ -21,9 +27,7 @@ export default class UserController {
     githubUserName: string
   }, password: string){
 
-    const salt = await new Promise<string>((resolve, reject) =>
-      randomBytes(16, (err, buf) =>
-        err ? reject(err) : resolve(buf.toString('utf8'))))
+    const salt = await randomBytesAsync(16)
 
     const hash = await hashpass(password, salt)
     
@@ -42,11 +46,13 @@ export default class UserController {
 
     return user && slowEquals(user.hash, await hashpass(password, user.salt)) ? user : null
   }
-  async updateSettings(userId: string, settings: {
+  async updateSettings(userId: string, settings: Partial<{
     username:string,
+    githubUserName: string,
     slackUserId: string,
-    githubUserName: string
-  }) {
+    slackOauthState: string,
+    slackAccessToken: string,
+  }>) {
     return await (await this.connection)
     .manager.updateById(UserModel, userId, settings)
   }
@@ -57,6 +63,18 @@ export default class UserController {
   async getByGitHubUserName(githubUserName: string){
     return await (await this.connection)
     .manager.findOne(UserModel, { githubUserName })
+  }
+  async createSlackOathState(id: string){
+    const slackOauthState = await randomBytesAsync(16)
+    
+    await (await this.connection)
+    .manager.updateById(UserModel, id, { slackOauthState })
+
+    return slackOauthState
+  }
+  async getBySlackOathState(slackOauthState: string){
+    return await (await this.connection)
+    .manager.findOne(UserModel, { slackOauthState })
   }
   async getBySlackUserId(slackUserId: string){
     return await (await this.connection)

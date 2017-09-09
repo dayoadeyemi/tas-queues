@@ -6,6 +6,15 @@ export default class TaskController {
   private events: EventEmitter
   constructor(private connection: Promise<Connection>){
     this.events = new EventEmitter()
+    this.events.addListener(`/tasks`, async (task: TaskModel) => {
+      const highest = await this.highest(task.userId)
+      if (!highest || task.id === highest.id) {
+        this.events.emit(`/tasks/latest`, task)
+      }
+    })
+  }
+  addLatestListener(listener: (task: TaskModel) => void){
+    this.events.addListener(`/tasks/latest`, listener)
   }
   addListener(userId: string, listener: (task: TaskModel) => void){
     this.events.addListener(`/users/${userId}/tasks`, listener)
@@ -54,7 +63,8 @@ export default class TaskController {
       task.priority = highest ? highest.priority + 1 : 0
     }
     const saved = await (await this.connection).manager.save(task)
-    this.events.emit('/tasks', saved);
+    this.events.emit(`/users/${userId}/tasks`, saved);
+    this.events.emit(`/tasks`, saved);
     return saved
   }
 }

@@ -16,6 +16,29 @@ import * as router from 'express-promise-router';
 import * as cookieParser from 'cookie-parser';
 import * as session  from 'express-session';
 import { v4 } from 'uuid'
+import { stringify } from 'qs'
+
+const getContent = function<T>(url: string) {
+  // return new pending promise
+  return new Promise<T>((resolve, reject) => {
+    // select http or https module, depending on reqested url
+    const lib = url.startsWith('https') ? require('https') : require('http');
+    const request = lib.get(url, (response) => {
+      // handle http errors
+      if (response.statusCode < 200 || response.statusCode > 299) {
+         reject(new Error('Failed to load page, status code: ' + response.statusCode));
+       }
+      // temporary data holder
+      const body = [];
+      // on every content chunk, push it to the data array
+      response.on('data', (chunk) => body.push(chunk));
+      // we are done, resolve promise with those joined chunks
+      response.on('end', () => resolve(JSON.parse(body.join(''))));
+    });
+    // handle connection errors of the request
+    request.on('error', (err) => reject(err))
+    })
+};
 
 declare global {
     namespace Express {
@@ -79,7 +102,7 @@ const getYesterdayString = () => {
 tasksRouter.get('/report', async (req, res) => {
     const { after } = req.query
     if (!after) {
-        res.redirect('/report?after='+getYesterdayString())
+        return res.redirect('/report?after='+getYesterdayString())
     }
     const tasks = await req.controllers.tasks.report(req.user.id, after)
 
@@ -105,10 +128,20 @@ tasksRouter.get('/tasks/updates', async (req, res) => {
 tasksRouter.get('/settings', async (req, res) => {
     res.send(SettingsView(req.user))
 })
+
 tasksRouter.post('/settings', async (req, res) => {
     await req.controllers.users.updateSettings(req.user.id, req.body)
     if (req.cookies.browser) res.redirect('/')
     else res.sendStatus(204).end()
+})
+
+tasksRouter.post('/slack/authorize', async (req, res) => {
+    const slackOauthState = await req.controllers.users.createSlackOathState(req.user.id)
+    res.redirect('https://slack.com/oauth/authorize?'+ stringify({
+        client_id: process.env.SLACK_CLIENT_ID,
+        scope: 'identity.basic',
+        state: slackOauthState
+    }))
 })
 
 tasksRouter.post('/tasks/:id/archive', async (req, res) => {
@@ -162,6 +195,19 @@ integrationsApi.post('/github', async (req, res) => {
     }
     res.send();
 });
+
+controllers.tasks.addLatestListener(async task => {
+    const user = await controllers.users.getById(task.userId)
+    if (user && user.slackUserId && user.slackAccessToken) {
+        const reponse = await getContent('https://slack.com/api/users.profile.set?' + stringify({
+            token: user.slackAccessToken,
+            name: 'status_text',
+            user: user.slackUserId,
+            value: task.title
+        }))
+    }
+})
+
 integrationsApi.post('/slack', async (req, res) => {
     if (req.body.payload) {
         const {
@@ -275,7 +321,32 @@ integrationsApi.post('/slack', async (req, res) => {
     }
 })
 
-
+integrationsApi.get('/slack/authorize', async (req, res) => {
+    const { code, state } = req.query
+    if (code && state) {
+        const [route, slackOauthState] = state.split(';')
+        const user = await req.controllers.users.getBySlackOathState(slackOauthState)
+        if (user) {
+            const access = await getContent<{
+                ok: boolean
+                access_token: string
+                user: { id: string }
+            }>('https://slack.com/api/oauth.access?' + stringify({
+                client_id: process.env.SLACK_CLIENT_ID,
+                client_secret:  process.env.SLACK_CLIENT_SECRET,
+                code,
+            }))
+            if (access.ok) {
+                await req.controllers.users.updateSettings(user.id, {
+                    slackAccessToken: access.access_token,
+                    slackOauthState: null,
+                    slackUserId: access.user.id
+                })
+            }
+        }
+    }
+    return res.redirect('/settings')
+})
 
 const userRouter = router() as express.Router
 userRouter.get('/home', async (req, res, next) => {

@@ -17,6 +17,13 @@ __decorate([
     typeorm_1.Column("varchar", { nullable: true })
 ], UserModel.prototype, "slackUserId", void 0);
 __decorate([
+    typeorm_1.Column("varchar", { nullable: true }),
+    typeorm_1.Index({ unique: true })
+], UserModel.prototype, "slackOauthState", void 0);
+__decorate([
+    typeorm_1.Column("varchar", { nullable: true })
+], UserModel.prototype, "slackAccessToken", void 0);
+__decorate([
     typeorm_1.Column("varchar", { nullable: true })
 ], UserModel.prototype, "githubUserName", void 0);
 __decorate([

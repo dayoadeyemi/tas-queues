@@ -14,6 +14,15 @@ class TaskController {
     constructor(connection) {
         this.connection = connection;
         this.events = new events_1.EventEmitter();
+        this.events.addListener(`/tasks`, (task) => __awaiter(this, void 0, void 0, function* () {
+            const highest = yield this.highest(task.userId);
+            if (!highest || task.id === highest.id) {
+                this.events.emit(`/tasks/latest`, task);
+            }
+        }));
+    }
+    addLatestListener(listener) {
+        this.events.addListener(`/tasks/latest`, listener);
     }
     addListener(userId, listener) {
         this.events.addListener(`/users/${userId}/tasks`, listener);
@@ -73,7 +82,8 @@ class TaskController {
                 task.priority = highest ? highest.priority + 1 : 0;
             }
             const saved = yield (yield this.connection).manager.save(task);
-            this.events.emit('/tasks', saved);
+            this.events.emit(`/users/${userId}/tasks`, saved);
+            this.events.emit(`/tasks`, saved);
             return saved;
         });
     }

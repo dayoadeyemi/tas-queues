@@ -11,11 +11,6 @@ export const SettingsForm = (user:UserModel) => Form({
       value: user.username
     }),
     Input({ type: 'text',
-      id: 'slackUserId',
-      name: 'Slack User Id',
-      value: user.slackUserId
-    }),
-    Input({ type: 'text',
       id: 'githubUserName',
       name: 'Github Username',
       value: user.githubUserName
