@@ -6,7 +6,7 @@ const converter = new Converter()
 export const TaskView = (task) => {
   const modal = new Modal('Edit Task', TaskForm(task))
   return `
-        <form action="/tasks/${task.id}/archive" method="post" onsubmit="cleanupListeners()">
+    <form action="/tasks/${task.id}/archive" method="post" onsubmit="cleanupListeners()">
         <button type="submit" class="close" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>

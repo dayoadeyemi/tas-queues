@@ -28,7 +28,7 @@ const Queues = (tasks: TaskModel[]) => {
                 </div>
                 
                 <div id="${name}-content" class="card-body collapse show" role="tabpanel" aria-labelledby="heading-${name}">
-                    ${tasks.map(TaskView).join('\n')}
+                    ${new ListView(tasks.map(TaskView))}
                 </div>
             </div>
         `

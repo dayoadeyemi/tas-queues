@@ -7,7 +7,7 @@ const converter = new showdown_1.Converter();
 exports.TaskView = (task) => {
     const modal = new Modal_1.default('Edit Task', Task_1.default(task));
     return `
-        <form action="/tasks/${task.id}/archive" method="post" onsubmit="cleanupListeners()">
+    <form action="/tasks/${task.id}/archive" method="post" onsubmit="cleanupListeners()">
         <button type="submit" class="close" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>

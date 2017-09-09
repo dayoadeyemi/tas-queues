@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Task_1 = require("../Views/Task");
+const List_1 = require("./List");
 const ramda_1 = require("ramda");
 const Queues = (tasks) => {
     return [tasks]
@@ -26,7 +27,7 @@ const Queues = (tasks) => {
                 </div>
                 
                 <div id="${name}-content" class="card-body collapse show" role="tabpanel" aria-labelledby="heading-${name}">
-                    ${tasks.map(Task_1.default).join('\n')}
+                    ${new List_1.default(tasks.map(Task_1.default))}
                 </div>
             </div>
         `;
