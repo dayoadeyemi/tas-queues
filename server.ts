@@ -1,7 +1,13 @@
+import 'source-map-support/register'
 import 'reflect-metadata'
-import { TaskModel } from './Task'
-import { UserModel, SignUpForm, SignInForm } from './Users'
-import { HomeView, NavBar } from './Home'
+import TaskModel from './Models/Task'
+import UserModel from './Models/User'
+import SignUpForm from './Views/Forms/SignUp'
+import SignInForm from './Views/Forms/SignIn'
+import HomeView from './Views/Home'
+import ReportView from './Views/Report'
+import MainView from './Views/Main'
+import SettingsView from './Views/Settings'
 import { IssuesEvent } from './GitHub'
 import * as controllers from './Controllers/'
 import * as express from 'express'
@@ -9,7 +15,6 @@ import { urlencoded, json } from 'body-parser'
 import * as router from 'express-promise-router';
 import * as cookieParser from 'cookie-parser';
 import * as session  from 'express-session';
-import * as auth from 'basic-auth'
 import { v4 } from 'uuid'
 
 declare global {
@@ -44,21 +49,6 @@ app.use((req, res, next) => {
     next()
 })
 
-const AppShell = (body: string) => `
-<html>
-    <head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    </head>
-    <body>
-        ${body}
-        <script src="/app.js"></script>
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
-    </body>
-</html>
-`
-
 const Container = (content) => `
 <div class="container">
     <div class="row">
@@ -73,14 +63,27 @@ tasksRouter.use(async (req, res, next) => {
     if (req.user) {
         return next()
     }
-    res.statusCode = 401
-    res.redirect('/sign-in')
+    res.redirect('/home')
 })
 tasksRouter.get('/', async (req, res) => {
-    const { report } = req.query 
-    const tasks = report ? await req.controllers.tasks.report(req.user.id, report) : await req.controllers.tasks.list(req.user.id)
+    const tasks = await req.controllers.tasks.list(req.user.id)
 
-    res.send(AppShell(HomeView(req.user, tasks, report ? 'report' : null)))
+    res.send(MainView(req.user, tasks))
+})
+
+const getYesterdayString = () => {
+    const yesterday = new Date(new Date().toISOString().slice(0, 10))
+    yesterday.setDate(yesterday.getDate() - 1)
+    return yesterday.toISOString().slice(0, 10)
+}
+tasksRouter.get('/report', async (req, res) => {
+    const { after } = req.query
+    if (!after) {
+        res.redirect('/report?after='+getYesterdayString())
+    }
+    const tasks = await req.controllers.tasks.report(req.user.id, after)
+
+    res.send(ReportView(req.user, tasks))
 })
 
 tasksRouter.get('/tasks/updates', async (req, res) => {
@@ -90,15 +93,18 @@ tasksRouter.get('/tasks/updates', async (req, res) => {
         'Connection': 'keep-alive'
     });
 
-    const listener = (task: TaskModel) => {
+    const listener = (task) => {
         res.write('event: data\n')
         res.write('data: '+ JSON.stringify(task) + '\n\n')
     }
 
-    req.controllers.tasks.addListener(listener)
-    req.on('close', () =>  req.controllers.tasks.removeListener(listener))
+    req.controllers.tasks.addListener(req.user.id, listener)
+    req.on('close', () =>  req.controllers.tasks.removeListener(req.user.id, listener))
 });
 
+tasksRouter.get('/settings', async (req, res) => {
+    res.send(SettingsView(req.user))
+})
 tasksRouter.post('/settings', async (req, res) => {
     await req.controllers.users.updateSettings(req.user.id, req.body)
     if (req.cookies.browser) res.redirect('/')
@@ -106,7 +112,7 @@ tasksRouter.post('/settings', async (req, res) => {
 })
 
 tasksRouter.post('/tasks/:id/archive', async (req, res) => {
-    await req.controllers.tasks.update(req.params, { archivedAt: new Date() })
+    await req.controllers.tasks.archive(req.user.id, req.params.id)
     if (req.cookies.browser) res.redirect('/')
     else res.sendStatus(204).end()
 })
@@ -269,32 +275,11 @@ integrationsApi.post('/slack', async (req, res) => {
     }
 })
 
-const tasksApi = router() as express.Router
-
-tasksApi.post('/tasks', async (req, res) => {
-    const saved = await req.controllers.tasks.add(req.user.id, new TaskModel(req.body))
-    res.send(saved)
-});
-
-tasksApi.get('/tasks', async (req, res) => {
-    const tasks = await req.controllers.tasks.list(req.user.id)
-    res.send(tasks)
-});
-tasksApi.get('/tasks-report', async (req, res) => {
-    const { report } = req.query 
-    const tasks = await req.controllers.tasks.report(req.user.id, report)
-    res.send(tasks)
-});
-
-tasksApi.post('/tasks/:id/archive', async (req, res) => {
-    await await req.controllers.tasks.update(req.params, { archivedAt: new Date() })
-    res.sendStatus(204).end()
-})
 
 
 const userRouter = router() as express.Router
-userRouter.get('/sign-up', async (req, res, next) => {
-    res.send(AppShell(NavBar() + Container(SignUpForm())))
+userRouter.get('/home', async (req, res, next) => {
+    res.send(HomeView())
 })
 userRouter.post('/sign-up', async (req, res, next) => {
     const {
@@ -310,9 +295,6 @@ userRouter.post('/sign-up', async (req, res, next) => {
     }, password)
     req.session.userId = user.id
     res.redirect('/')
-})
-userRouter.get('/sign-in', async (req, res, next) => {
-    res.send(AppShell(NavBar() + Container(SignInForm())))
 })
 userRouter.post('/sign-in', async (req, res, next) => {
     const { username, password } = req.body
@@ -331,18 +313,32 @@ userRouter.post('/users', async (req, res, next) => {
 })
 userRouter.get('/users', async (req, res, next) => {
     const { username, password } = req.body
-    const users =  await (await req.controllers.pConnection)
-    .getRepository(UserModel)
-    .find()
-
-    res.send(users.map(({
-        id,
-        username,
-        slackUserId,
-        githubUserName
-    }) => ({ id, username, slackUserId, githubUserName })))
-
+    res.send(await req.controllers.users.all())
 })
+
+const tasksApi = router() as express.Router
+
+tasksApi.post('/tasks', async (req, res) => {
+    const saved = await req.controllers.tasks.add(req.params.userId, new TaskModel(req.body))
+    res.send(saved)
+});
+
+tasksApi.get('/tasks', async (req, res) => {
+    const tasks = await req.controllers.tasks.list(req.params.userId)
+    res.send(tasks)
+});
+
+tasksApi.get('/tasks-report', async (req, res) => {
+    const { report } = req.query 
+    const tasks = await req.controllers.tasks.report(req.params.userId, report)
+    res.send(tasks)
+});
+
+tasksApi.post('/tasks/:id/archive', async (req, res) => {
+    await await req.controllers.tasks.archive(req.params.userId, req.params.id)
+    res.sendStatus(204).end()
+})
+
 userRouter.use('/users/:userid', tasksApi)
 
 function errorHandler (err, req, res, next) {

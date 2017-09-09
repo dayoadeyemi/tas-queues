@@ -20,8 +20,11 @@ exports.NavBar = (text = '') => `
 exports.HomeView = (user, tasks, state) => {
     const taskFormModal = new Modal_1.Modal('New Task', Task_1.TaskForm({}));
     const settingsFormModal = new Modal_1.Modal('Settings', Users_1.SettingsForm(user));
-    const queues = ramda_1.sortBy(ramda_1.head, ramda_1.toPairs(ramda_1.groupBy(ramda_1.prop('queue'), tasks)))
-        .map((([name, tasks]) => new Queue_1.QueueView({ name, tasks }, state)));
+    const queues = [tasks]
+        .map(ramda_1.groupBy(ramda_1.prop('queue')))
+        .map($ => ramda_1.toPairs($))
+        .map(ramda_1.sortBy(ramda_1.head))
+        .map(ramda_1.map(([name, tasks]) => new Queue_1.QueueView({ name, tasks }, state)))[0];
     return `
         ${exports.NavBar(`
         ${state === 'report' ? `

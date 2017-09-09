@@ -7,9 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const typeorm_1 = require("typeorm");
-const Modal_1 = require("./Modal");
-const Decorator_1 = require("./Decorator");
-const showdown_1 = require("showdown");
+const Decorator_1 = require("../Decorator");
 let TaskModel = class TaskModel extends Decorator_1.Decorator {
 };
 __decorate([
@@ -51,20 +49,5 @@ TaskModel = __decorate([
     }),
     typeorm_1.Index('list', (task) => [task.userId, task.archivedAt, task.queue, task.priority], { unique: true })
 ], TaskModel);
-exports.TaskModel = TaskModel;
-const converter = new showdown_1.Converter();
-exports.TaskView = (task) => {
-    const modal = new Modal_1.Modal('Edit Task', TaskForm(task));
-    return `
-    <form action="/tasks/${task.id}/archive" method="post" onsubmit="cleanupListeners()">
-        <button type="submit" class="close" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </form>
-    <a id="${task.id}" ${modal.toggleParams()}>
-        <b>${task.title}</b> (${task.estimate || 1})
-        <div>${converter.makeHtml(task.description)}</div>
-    </a>
-    ${modal}`;
-};
+exports.default = TaskModel;
 //# sourceMappingURL=Task.js.map

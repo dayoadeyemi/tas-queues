@@ -7,8 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const typeorm_1 = require("typeorm");
-const Decorator_1 = require("./Decorator");
-const FormUtils_1 = require("./FormUtils");
+const Decorator_1 = require("../Decorator");
 let UserModel = class UserModel extends Decorator_1.Decorator {
 };
 __decorate([
@@ -33,41 +32,5 @@ __decorate([
 UserModel = __decorate([
     typeorm_1.Entity()
 ], UserModel);
-exports.UserModel = UserModel;
-exports.SignUpForm = () => FormUtils_1.Form({
-    action: '/sign-up',
-    children: [
-        FormUtils_1.Input({ type: 'text', id: 'username', name: 'Username' }),
-        FormUtils_1.Input({ type: 'password', id: 'password', name: 'Password' }),
-        FormUtils_1.Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
-        FormUtils_1.Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
-    ],
-});
-exports.SignInForm = () => FormUtils_1.Form({
-    action: '/sign-in',
-    children: [
-        FormUtils_1.Input({ type: 'text', id: 'username', name: 'Username' }),
-        FormUtils_1.Input({ type: 'password', id: 'password', name: 'Password' }),
-    ],
-});
-exports.SettingsForm = (user) => FormUtils_1.Form({
-    action: '/settings',
-    children: [
-        FormUtils_1.Input({ type: 'text',
-            id: 'username',
-            name: 'Username',
-            value: user.username
-        }),
-        FormUtils_1.Input({ type: 'text',
-            id: 'slackUserId',
-            name: 'Slack User Id',
-            value: user.slackUserId
-        }),
-        FormUtils_1.Input({ type: 'text',
-            id: 'githubUserName',
-            name: 'Github Username',
-            value: user.githubUserName
-        }),
-    ],
-});
+exports.default = UserModel;
 //# sourceMappingURL=Users.js.map

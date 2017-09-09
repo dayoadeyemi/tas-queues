@@ -25,9 +25,11 @@
     "@types/ramda": "^0.24.7",
     "@types/showdown": "^1.7.1",
     "@types/uuid": "^3.4.2",
-    "repl-promised": "^0.1.0"
+    "repl-promised": "^0.1.0",
+    "source-map-support": "^0.4.17"
   },
   "dependencies": {
+    "@types/node": "^8.0.28",
     "basic-auth": "^1.1.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",

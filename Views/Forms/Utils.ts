@@ -1,4 +1,4 @@
-export const valueIfExists = (value: string | number) => value ? `value="${value}"` : ""
+const valueIfExists = (value: string | number) => value ? `value="${value}"` : ""
 
 export const Input = (params: {
     type: 'number' | 'text' | 'textarea' | 'password',
@@ -16,12 +16,12 @@ export const Input = (params: {
     }
 </div>`
 
-export const Form = (params: { id?: string, children: String[], action: string, onsubmit?: string}) => `
+export const Form = (params: { id?: string, children: String[], action: string, onsubmit?: string, cta: string }) => `
 <form action="${params.action}" method="post" onsubmit="${params.onsubmit||''}">
     ${params.id ? `<input hidden name="id" type="text" class="form-control" id="id" value=${params.id} >` : ''}
     ${params.children.join('\n')}
     <div class="form-group text-centre">
         <label for="submit" class="form-label"></label>
-        <button id="submit" type="submit" class="btn btn-success">Save</button>
+        <button id="submit" type="submit" class="btn btn-outline-info">${params.cta}</button>
     </div>
 </form>`

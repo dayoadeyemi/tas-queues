@@ -1,24 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, Connection, Index } from 'typeorm'
 import { pbkdf2, randomBytes } from 'crypto'
-import { Decorator } from './Decorator'
-import { Form, Input } from './FormUtils'
+import { Connection } from 'typeorm'
+import UserModel from '../Models/User'
 
-@Entity()
-export class UserModel extends Decorator<Partial<UserModel>> {
-  @PrimaryGeneratedColumn("uuid")
-  id: string
-  @Column("varchar", { nullable: true })
-  slackUserId: string
-  @Column("varchar", { nullable: true })
-  githubUserName: string
-  @Column("varchar")
-  @Index({ unique: true })
-  username: string
-  @Column("varchar")
-  hash: string
-  @Column("varchar")
-  salt: string
-}
 const hashpass = (password: string, salt: string) => new Promise<string>((resolve, reject) =>
   pbkdf2(password, salt, 100000, 512, 'sha512', (err, derivedKey) =>
     err ? reject(err) : resolve(derivedKey.toString('hex'))))
@@ -30,7 +13,7 @@ const slowEquals = (a: string, b: string) => {
     }
     return diff === 0;
 }
-export class UserController {
+export default class UserController {
   constructor(private connection: Promise<Connection>){}
   async create(settings: {
     username:string,
@@ -79,41 +62,16 @@ export class UserController {
     return await (await this.connection)
     .manager.findOne(UserModel, { slackUserId })
   }
-}
+  async all(){
+    const users = await (await this.connection)
+    .getRepository(UserModel)
+    .find()
 
-export const SignUpForm = () => Form({
-  action: '/sign-up',
-  children: [
-    Input({ type: 'text', id: 'username', name: 'Username' }),
-    Input({ type: 'password', id: 'password', name: 'Password' }),
-    Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
-    Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
-  ],
-})
-export const SignInForm = () => Form({
-  action: '/sign-in',
-  children: [
-    Input({ type: 'text', id: 'username', name: 'Username' }),
-    Input({ type: 'password', id: 'password', name: 'Password' }),
-  ],
-})
-export const SettingsForm = (user:UserModel) => Form({
-  action: '/settings',
-  children: [
-    Input({ type: 'text',
-      id: 'username',
-      name: 'Username',
-      value: user.username
-    }),
-    Input({ type: 'text',
-      id: 'slackUserId',
-      name: 'Slack User Id',
-      value: user.slackUserId
-    }),
-    Input({ type: 'text',
-      id: 'githubUserName',
-      name: 'Github Username',
-      value: user.githubUserName
-    }),
-  ],
-})
+    return users.map(({
+        id,
+        username,
+        slackUserId,
+        githubUserName
+    }) => ({ id, username, slackUserId, githubUserName }))
+  }
+}

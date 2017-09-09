@@ -8,10 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("source-map-support/register");
 require("reflect-metadata");
-const Task_1 = require("./Task");
-const Users_1 = require("./Users");
-const Home_1 = require("./Home");
+const Task_1 = require("./Models/Task");
+const Home_1 = require("./Views/Home");
+const Report_1 = require("./Views/Report");
+const Main_1 = require("./Views/Main");
+const Settings_1 = require("./Views/Settings");
 const controllers = require("./Controllers/");
 const express = require("express");
 const body_parser_1 = require("body-parser");
@@ -38,20 +41,6 @@ app.use((req, res, next) => {
     req.controllers = controllers;
     next();
 });
-const AppShell = (body) => `
-<html>
-    <head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    </head>
-    <body>
-        ${body}
-        <script src="/app.js"></script>
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
-    </body>
-</html>
-`;
 const Container = (content) => `
 <div class="container">
     <div class="row">
@@ -66,13 +55,24 @@ tasksRouter.use((req, res, next) => __awaiter(this, void 0, void 0, function* ()
     if (req.user) {
         return next();
     }
-    res.statusCode = 401;
-    res.redirect('/sign-in');
+    res.redirect('/home');
 }));
 tasksRouter.get('/', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const { report } = req.query;
-    const tasks = report ? yield req.controllers.tasks.report(req.user.id, report) : yield req.controllers.tasks.list(req.user.id);
-    res.send(AppShell(Home_1.HomeView(req.user, tasks, report ? 'report' : null)));
+    const tasks = yield req.controllers.tasks.list(req.user.id);
+    res.send(Main_1.default(req.user, tasks));
+}));
+const getYesterdayString = () => {
+    const yesterday = new Date(new Date().toISOString().slice(0, 10));
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().slice(0, 10);
+};
+tasksRouter.get('/report', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const { after } = req.query;
+    if (!after) {
+        res.redirect('/report?after=' + getYesterdayString());
+    }
+    const tasks = yield req.controllers.tasks.report(req.user.id, after);
+    res.send(Report_1.default(req.user, tasks));
 }));
 tasksRouter.get('/tasks/updates', (req, res) => __awaiter(this, void 0, void 0, function* () {
     res.writeHead(200, {
@@ -84,8 +84,11 @@ tasksRouter.get('/tasks/updates', (req, res) => __awaiter(this, void 0, void 0, 
         res.write('event: data\n');
         res.write('data: ' + JSON.stringify(task) + '\n\n');
     };
-    req.controllers.tasks.addListener(listener);
-    req.on('close', () => req.controllers.tasks.removeListener(listener));
+    req.controllers.tasks.addListener(req.user.id, listener);
+    req.on('close', () => req.controllers.tasks.removeListener(req.user.id, listener));
+}));
+tasksRouter.get('/settings', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    res.send(Settings_1.default(req.user));
 }));
 tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, function* () {
     yield req.controllers.users.updateSettings(req.user.id, req.body);
@@ -95,14 +98,14 @@ tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, func
         res.sendStatus(204).end();
 }));
 tasksRouter.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    yield req.controllers.tasks.update(req.params, { archivedAt: new Date() });
+    yield req.controllers.tasks.archive(req.user.id, req.params.id);
     if (req.cookies.browser)
         res.redirect('/');
     else
         res.sendStatus(204).end();
 }));
 tasksRouter.post('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.TaskModel(req.body));
+    const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default(req.body));
     if (req.cookies.browser)
         res.redirect('/');
     else
@@ -131,7 +134,7 @@ integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, fu
             req.user = yield req.controllers.users
                 .getByGitHubUserName(issuesEvent.assignee.login);
             if (req.user) {
-                const task = new Task_1.TaskModel({
+                const task = new Task_1.default({
                     id: uuid_1.v4({ random: base256(issuesEvent.issue.id) }),
                     queue: 'q1',
                     title: issuesEvent.issue.title,
@@ -182,7 +185,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             });
         }
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
-        const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.TaskModel({
+        const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default({
             queue: 'q1',
             title: `slack task from ${username}`,
             description: body,
@@ -243,27 +246,9 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
         });
     }
 }));
-const tasksApi = router();
-tasksApi.post('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.TaskModel(req.body));
-    res.send(saved);
-}));
-tasksApi.get('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const tasks = yield req.controllers.tasks.list(req.user.id);
-    res.send(tasks);
-}));
-tasksApi.get('/tasks-report', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const { report } = req.query;
-    const tasks = yield req.controllers.tasks.report(req.user.id, report);
-    res.send(tasks);
-}));
-tasksApi.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    yield yield req.controllers.tasks.update(req.params, { archivedAt: new Date() });
-    res.sendStatus(204).end();
-}));
 const userRouter = router();
-userRouter.get('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    res.send(AppShell(Home_1.NavBar() + Container(Users_1.SignUpForm())));
+userRouter.get('/home', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+    res.send(Home_1.default());
 }));
 userRouter.post('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, slackUserId, githubUserName, password, } = req.body;
@@ -274,9 +259,6 @@ userRouter.post('/sign-up', (req, res, next) => __awaiter(this, void 0, void 0, 
     }, password);
     req.session.userId = user.id;
     res.redirect('/');
-}));
-userRouter.get('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    res.send(AppShell(Home_1.NavBar() + Container(Users_1.SignInForm())));
 }));
 userRouter.post('/sign-in', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;
@@ -294,10 +276,25 @@ userRouter.post('/users', (req, res, next) => __awaiter(this, void 0, void 0, fu
 }));
 userRouter.get('/users', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     const { username, password } = req.body;
-    const users = yield (yield req.controllers.pConnection)
-        .getRepository(Users_1.UserModel)
-        .find();
-    res.send(users.map(({ id, username, slackUserId, githubUserName }) => ({ id, username, slackUserId, githubUserName })));
+    res.send(yield req.controllers.users.all());
+}));
+const tasksApi = router();
+tasksApi.post('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const saved = yield req.controllers.tasks.add(req.params.userId, new Task_1.default(req.body));
+    res.send(saved);
+}));
+tasksApi.get('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const tasks = yield req.controllers.tasks.list(req.params.userId);
+    res.send(tasks);
+}));
+tasksApi.get('/tasks-report', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    const { report } = req.query;
+    const tasks = yield req.controllers.tasks.report(req.params.userId, report);
+    res.send(tasks);
+}));
+tasksApi.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    yield yield req.controllers.tasks.archive(req.params.userId, req.params.id);
+    res.sendStatus(204).end();
 }));
 userRouter.use('/users/:userid', tasksApi);
 function errorHandler(err, req, res, next) {

@@ -1,19 +1,9 @@
-import { createConnection } from 'typeorm'
-import { TaskModel, TaskController } from '../Task'
-import { UserModel, UserController } from '../Users'
-
-export const pConnection = createConnection(Object.assign({
-    synchronize: true,
-    entities: [TaskModel, UserModel],
-    autoSchemaSync: true,
-    logging: []
-}, process.env.NODE_ENV !== 'development' ? {
-    type: 'postgres' as 'postgres',
-    url: process.env.DATABASE_URL
-} : {
-    type: 'sqlite' as 'sqlite',
-    database: ".db",
-}))
+import TaskModel from '../Models/Task'
+import TaskController from './Tasks'
+import UserModel from '../Models/User'
+import UserController from './Users'
+import pConnection from './pConnection'
 
 export const tasks = new TaskController(pConnection)
 export const users = new UserController(pConnection)
+exports.pConnection = pConnection
