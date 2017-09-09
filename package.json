@@ -25,8 +25,7 @@
     "@types/ramda": "^0.24.7",
     "@types/showdown": "^1.7.1",
     "@types/uuid": "^3.4.2",
-    "repl-promised": "^0.1.0",
-    "source-map-support": "^0.4.17"
+    "repl-promised": "^0.1.0"
   },
   "dependencies": {
     "@types/node": "^8.0.28",
