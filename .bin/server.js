@@ -293,6 +293,7 @@ integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, vo
     if (code && state) {
         const [route, slackOauthState] = state.split(';');
         const user = yield req.controllers.users.getBySlackOathState(slackOauthState);
+        console.log(req.user);
         if (user) {
             const access = yield getContent('https://slack.com/api/oauth.access?' + qs_1.stringify({
                 client_id: process.env.SLACK_CLIENT_ID,
