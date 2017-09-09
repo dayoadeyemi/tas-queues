@@ -289,18 +289,14 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
 }));
 integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const { code, state } = req.query;
-    console.log(req.query);
     if (code && state) {
-        const [route, slackOauthState] = state.split(';');
-        const user = yield req.controllers.users.getBySlackOathState(slackOauthState);
-        console.log(user);
+        const user = yield req.controllers.users.getBySlackOathState(state);
         if (user) {
             const access = yield getContent('https://slack.com/api/oauth.access?' + qs_1.stringify({
                 client_id: process.env.SLACK_CLIENT_ID,
                 client_secret: process.env.SLACK_CLIENT_SECRET,
                 code,
             }));
-            console.log(access);
             if (access.ok) {
                 yield req.controllers.users.updateSettings(user.id, {
                     slackAccessToken: access.access_token,

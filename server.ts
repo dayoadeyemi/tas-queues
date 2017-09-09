@@ -323,11 +323,8 @@ integrationsApi.post('/slack', async (req, res) => {
 
 integrationsApi.get('/slack/authorize', async (req, res) => {
     const { code, state } = req.query
-    console.log(req.query)
     if (code && state) {
-        const [route, slackOauthState] = state.split(';')
-        const user = await req.controllers.users.getBySlackOathState(slackOauthState)
-        console.log(user)
+        const user = await req.controllers.users.getBySlackOathState(state)
         if (user) {
             const access = await getContent<{
                 ok: boolean
@@ -338,7 +335,6 @@ integrationsApi.get('/slack/authorize', async (req, res) => {
                 client_secret:  process.env.SLACK_CLIENT_SECRET,
                 code,
             }))
-            console.log(access)
             if (access.ok) {
                 await req.controllers.users.updateSettings(user.id, {
                     slackAccessToken: access.access_token,
