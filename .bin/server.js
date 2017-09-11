@@ -212,9 +212,9 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
         const [_, slackUserId, slackUserName, body_unclean] = match;
         req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
         if (!req.user) {
-            res.send({
+            return res.send({
                 "response_type": "in_channel",
-                "text": "Couldn't find a user registered for slack name @" + username
+                "text": "Couldn't find a user registered for slack name @" + slackUserName
             });
         }
         if (body_unclean === '') {
@@ -222,7 +222,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             return res.send({
                 text: 'View the list at - ' + req.hostname + '\n\n' + tasks.sort(({ queue: q1, priority: p1 }, { queue: q2, priority: p2 }) => {
                     return q1 > q2 ? 1 : q1 < q2 ? -1 : p2 - p1;
-                }).map(task => `*${task.queue.toUpperCase() || 'Not Prioritised'} | ${task.title}*\n${task.description}\n`).join('\n')
+                }).map(task => `*${task.queue.toUpperCase() || 'Not Prioritised'} | ${task.title} (${task.estimate}) *\n${task.description}\n`).join('\n')
             });
         }
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
