@@ -260,8 +260,8 @@ integrationsApi.post('/slack', async (req, res) => {
         
         const saved = await req.controllers.tasks.add(req.user.id, new TaskModel({
             queue: 'q1',
-            title: `slack task from ${username}`,
-            description: body,
+            title: body,
+            description: `slack task from ${username}`,
         }))
         
         res.send({

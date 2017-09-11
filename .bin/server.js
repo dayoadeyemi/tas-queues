@@ -228,8 +228,8 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
         const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default({
             queue: 'q1',
-            title: `slack task from ${username}`,
-            description: body,
+            title: body,
+            description: `slack task from ${username}`,
         }));
         res.send({
             "response_type": "in_channel",
