@@ -242,7 +242,7 @@ integrationsApi.post('/slack', async (req, res) => {
         const [_, slackUserId, slackUserName, body_unclean] = match
         req.user = await req.controllers.users.getBySlackUserId(slackUserId)
         if (!req.user) {
-            res.send({
+            return res.send({
                 "response_type": "in_channel",
                 "text": "Couldn't find a user registered for slack name @" + slackUserName
             })
