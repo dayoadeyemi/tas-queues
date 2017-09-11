@@ -244,7 +244,7 @@ integrationsApi.post('/slack', async (req, res) => {
         if (!req.user) {
             res.send({
                 "response_type": "in_channel",
-                "text": "Couldn't find a user registered for slack name @" + username
+                "text": "Couldn't find a user registered for slack name @" + slackUserName
             })
         }
 
