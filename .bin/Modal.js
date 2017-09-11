@@ -1,10 +1,12 @@
-export class Modal {
-    static count = 0
-    id = 'modal-' + (++Modal.count).toString()
-    constructor(private title, private content: Object){}
-    toggleParams = () => `data-toggle="modal" data-target="#${this.id}"`
-
-    toString = () => `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+class Modal {
+    constructor(title, content) {
+        this.title = title;
+        this.content = content;
+        this.id = 'modal-' + (++Modal.count).toString();
+        this.toggleParams = () => `data-toggle="modal" data-target="#${this.id}"`;
+        this.toString = () => `
         <div class="modal fade" id="${this.id}" tabindex="-1" role="dialog" aria-labelledby="${this.id}-label" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -18,5 +20,9 @@ export class Modal {
                 </div>
             </div>
         </div>
-    `
+    `;
+    }
 }
+Modal.count = 0;
+exports.Modal = Modal;
+//# sourceMappingURL=Modal.js.map

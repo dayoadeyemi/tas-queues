@@ -1,23 +1,13 @@
-import { TaskModel, TaskView } from './Task'
-import { ListView } from './List'
-
-export interface QueueModel {
-    name: string,
-    tasks: TaskModel[]
-}
-
-export interface QueueView extends QueueModel {}
-export class QueueView implements QueueModel {
-    name: string
-    tasks: TaskView[]
-    estimate: number
-    constructor(queue: QueueModel, private state?: 'report'){
-        this.name = queue.name
-        this.tasks = queue.tasks.map(task => new TaskView(task))
-        this.estimate = queue.tasks.reduce((total, task) => total + task.estimate, 0)
-    }
-    toString = () => {
-        return `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Task_1 = require("../Views/Task");
+const List_1 = require("./List");
+class QueueView {
+    constructor(queue, state) {
+        this.state = state;
+        this.toString = () => {
+            const estimate = this.tasks.reduce((total, task) => total + task.estimate, 0);
+            return `
             <div class="card">
                 <div class="card-header" role="tab" id="heading-${this.name}">
                     <div class="row">
@@ -27,7 +17,7 @@ export class QueueView implements QueueModel {
                             </h5>
                         </div>
                         <div class="col text-right">
-                            <span>${this.tasks.length} task${this.tasks.length === 1 ? '' :'s'} (${this.estimate} point${this.estimate === 1 ? '' :'s'})</span>
+                            <span>${this.tasks.length} task${this.tasks.length === 1 ? '' : 's'} (${estimate} point${estimate === 1 ? '' : 's'})</span>
                         </div>
                     </div>
                     
@@ -35,9 +25,14 @@ export class QueueView implements QueueModel {
             </div>
             <div id="${this.name}-content" class="collapse show" role="tabpanel" aria-labelledby="heading-${this.name}">
                 <div class="card-body">
-                    ${new ListView(this.tasks)}
+                    ${new List_1.default(this.tasks.map(Task_1.default))}
                 </div>
             </div>
-        `
+        `;
+        };
+        this.name = queue.name;
+        this.tasks = queue.tasks;
     }
 }
+exports.QueueView = QueueView;
+//# sourceMappingURL=Queue.js.map
