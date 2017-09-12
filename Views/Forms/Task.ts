@@ -8,7 +8,7 @@ const TaskForm = (task: Partial<TaskModel>) => Form({
   children: [
     Input({ type: 'text', id: 'title', value: task.title, name: 'Title' }),
     Input({ type: 'text', id: 'queue', value: task.queue, name: 'Queue' }),
-    Input({ type: 'number', id: 'estimate', value: task.estimate, name: 'Estimate' }),
+    Input({ type: 'number', id: 'estimate', value: task.estimate || 1, name: 'Estimate' }),
     Input({ type: 'textarea', id: 'description', value: task.description, name: 'Description' })
   ]
 })
