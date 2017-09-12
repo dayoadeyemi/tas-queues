@@ -219,7 +219,10 @@ integrationsApi.post('/slack', async (req, res) => {
             original_message
         } = JSON.parse(req.body.payload)
         const updates = (actions as Array<any>).reduce((memo, action, i) => {
-            original_message.attachments.actions[i] = action
+            original_message.attachments[0]
+            .actions
+            .find(({ name }) => name === action.name)
+            .selected_options = action.selected_options
             memo[action.name] = action.selected_options[0].value
             return memo
         }, {})
@@ -428,6 +431,7 @@ function errorHandler (err, req, res, next) {
     }
     res.status(500)
     res.send(err && err.stack)
+    console.log(err.stack)
 }
 
 app.use(integrationsApi)
