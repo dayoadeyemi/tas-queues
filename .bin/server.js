@@ -186,7 +186,7 @@ controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, fu
             token: user.slackAccessToken,
             name: 'status_text',
             user: user.slackUserId,
-            value: task.title
+            value: (task.title || '').slice(0, 100)
         }));
     }
 }));
