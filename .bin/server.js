@@ -198,7 +198,9 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 .actions
                 .find(({ name }) => name === action.name)
                 .selected_options = action.selected_options;
-            memo[action.name] = action.selected_options[0].value;
+            memo[action.name] = action.selected_options ?
+                action.selected_options[0].value :
+                true;
             return memo;
         }, {});
         if (updates.done) {
