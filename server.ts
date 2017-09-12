@@ -218,11 +218,16 @@ integrationsApi.post('/slack', async (req, res) => {
             },
             original_message
         } = JSON.parse(req.body.payload)
-        const updates = actions.reduce((memo, action) => {
+        const updates = (actions as Array<any>).reduce((memo, action, i) => {
+            original_message.attachments.actions[i] = action
             memo[action.name] = action.selected_options[0].value
             return memo
         }, {})
-        await req.controllers.tasks.update({ id }, updates)
+        if (updates.done) {
+            delete original_message.attachments
+        } else {
+            await req.controllers.tasks.update({ id }, updates)
+        }
         res.send(original_message);
     } else {
         const {
@@ -313,7 +318,13 @@ integrationsApi.post('/slack', async (req, res) => {
                                     "value": 5
                                 },
                             ]
-                        }
+                        },
+                        {
+                            "name": "done",
+                            "text": "done",
+                            "type": "button",
+                            "value": "done"
+                        },
                     ]
                 }
             ]

@@ -193,11 +193,17 @@ controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, fu
 integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, function* () {
     if (req.body.payload) {
         const { actions, callback_id: id, user: { name: username }, original_message } = JSON.parse(req.body.payload);
-        const updates = actions.reduce((memo, action) => {
+        const updates = actions.reduce((memo, action, i) => {
+            original_message.attachments.actions[i] = action;
             memo[action.name] = action.selected_options[0].value;
             return memo;
         }, {});
-        yield req.controllers.tasks.update({ id }, updates);
+        if (updates.done) {
+            delete original_message.attachments;
+        }
+        else {
+            yield req.controllers.tasks.update({ id }, updates);
+        }
         res.send(original_message);
     }
     else {
@@ -280,7 +286,13 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                                     "value": 5
                                 },
                             ]
-                        }
+                        },
+                        {
+                            "name": "done",
+                            "text": "done",
+                            "type": "button",
+                            "value": "done"
+                        },
                     ]
                 }
             ]
