@@ -321,7 +321,7 @@ integrationsApi.post('/slack', async (req, res) => {
                         },
                         {
                             "name": "done",
-                            "text": "done",
+                            "text": "Done",
                             "type": "button",
                             "value": "done"
                         },

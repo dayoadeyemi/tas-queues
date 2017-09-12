@@ -289,7 +289,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                         },
                         {
                             "name": "done",
-                            "text": "done",
+                            "text": "Done",
                             "type": "button",
                             "value": "done"
                         },
