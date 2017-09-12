@@ -14,7 +14,7 @@ const AppShell = (params) => `
         <meta name="apple-mobile-web-app-capable" content="yes">        
         <title>TasQ</title>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-        <link rel="stylesheet" type="text/css" href="theme.css">        
+        <link rel="stylesheet" type="text/css" href="/theme.css">        
     </head>
     <body>
         <nav class="navbar navbar-expand-sm navbar-dark bg-dark navbar-fixed-top">
