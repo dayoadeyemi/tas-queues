@@ -414,7 +414,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             if (req.user) {
                 const tasks = yield req.controllers.tasks.list(req.user.id);
                 return res.send({
-                    "response_type": "ephemeral",
+                    "response_type": "in_channel",
                     "attachments": tasks.slice(0, 100).map(getSlackButtons)
                         .concat([{
                             "callback_id": 'done',
