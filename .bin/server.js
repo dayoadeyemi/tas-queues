@@ -121,9 +121,9 @@ tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, func
 }));
 tasksRouter.post('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const slackOauthState = yield req.controllers.users.createSlackOathState(req.user.id);
-    res.redirect('https://slack.com/oauth?' + qs_1.stringify({
+    res.redirect('https://slack.com/oauth/authorize?' + qs_1.stringify({
         client_id: process.env.SLACK_CLIENT_ID,
-        scope: 'users:write',
+        scope: 'commands,users.profile:write,users:write',
         state: slackOauthState
     }));
 }));
