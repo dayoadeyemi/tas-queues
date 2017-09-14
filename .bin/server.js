@@ -416,6 +416,10 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 return res.send({
                     "response_type": "in_channel",
                     "attachments": tasks.slice(0, 100).map(getSlackButtons)
+                        .map($ => {
+                        delete $.actions;
+                        return $;
+                    })
                         .concat([{
                             "callback_id": 'done',
                             "attachment_type": "default",
