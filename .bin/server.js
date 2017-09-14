@@ -121,9 +121,9 @@ tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, func
 }));
 tasksRouter.post('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const slackOauthState = yield req.controllers.users.createSlackOathState(req.user.id);
-    res.redirect('https://slack.com/oauth/authorize?' + qs_1.stringify({
+    res.redirect('https://slack.com/oauth?' + qs_1.stringify({
         client_id: process.env.SLACK_CLIENT_ID,
-        scope: 'identity.basic',
+        scope: 'users:write',
         state: slackOauthState
     }));
 }));
@@ -190,29 +190,209 @@ controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, fu
         }));
     }
 }));
+const getSlackButtons = (task) => {
+    const queueOptions = [
+        {
+            "text": "High",
+            "value": "p1"
+        },
+        {
+            "text": "Standard",
+            "value": "q2"
+        },
+        {
+            "text": "Low",
+            "value": "q3"
+        }
+    ];
+    const estimateOptions = [
+        {
+            "text": "1",
+            "value": "1"
+        },
+        {
+            "text": "2",
+            "value": "2"
+        },
+        {
+            "text": "3",
+            "value": "3"
+        },
+        {
+            "text": "5",
+            "value": "5"
+        },
+    ];
+    const attachment = {
+        "callback_id": task.id,
+        "attachment_type": "default",
+        "text": `${task.queue.toUpperCase() || 'Not Prioritised'} | ${task.title} (${task.estimate})`,
+        "actions": [
+            {
+                "name": "queue",
+                "text": "Change Priority",
+                "type": "select",
+                "options": queueOptions,
+                "selected_options": [queueOptions.find(option => option.value >= task.queue)]
+            },
+            {
+                "name": "estimate",
+                "text": "How complex is this task?",
+                "type": "select",
+                "options": estimateOptions,
+                "selected_options": [estimateOptions.find(option => option.value >= String(task.estimate))]
+            },
+            {
+                "name": "complete",
+                "text": "Complete",
+                "type": "button",
+                "value": "complete"
+            },
+        ]
+    };
+    return attachment;
+};
 integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, function* () {
     if (req.body.payload) {
-        const { actions, callback_id: id, user: { name: username }, original_message } = JSON.parse(req.body.payload);
+        const { actions, callback_id: id, user: { name: username, id: slackUserId, }, original_message } = JSON.parse(req.body.payload);
+        if (id === 'done') {
+            return res.send({
+                "response_type": "in_channel",
+                "text": "Got it, thanks!"
+            });
+        }
         const updates = actions.reduce((memo, action, i) => {
-            original_message.attachments[0]
-                .actions
-                .find(({ name }) => name === action.name)
-                .selected_options = action.selected_options;
             memo[action.name] = action.selected_options ?
                 action.selected_options[0].value :
                 true;
             return memo;
         }, {});
-        if (updates.done) {
-            delete original_message.attachments;
+        if (updates.complete) {
+            req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
+            yield req.controllers.tasks.archive(req.user.id, id);
+            return res.send({
+                "response_type": "in_channel",
+                "text": "completed"
+            });
         }
-        else {
-            yield req.controllers.tasks.update({ id }, updates);
-        }
-        res.send(original_message);
+        yield req.controllers.tasks.update({ id }, updates);
+        const task = yield req.controllers.tasks.getById(id);
+        const message = {
+            "response_type": "in_channel",
+            "attachments": [
+                getSlackButtons(task),
+                {
+                    "callback_id": task.id,
+                    "attachment_type": "default",
+                    "actions": [
+                        {
+                            "name": "done",
+                            "text": "Done",
+                            "type": "button",
+                            "value": "done"
+                        },
+                    ]
+                }
+            ]
+        };
+        res.send(message);
     }
     else {
-        const { team_domain, team_id: teamId, user_name: username, text, } = req.body;
+        const { team_domain, team_id: teamId, user_name: username, user_id: authorSlackUserId, text, } = req.body;
+        if (text === '') {
+            req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
+            if (req.user) {
+                const task = yield req.controllers.tasks.highest(req.user.id);
+                if (task) {
+                    return res.send({
+                        "response_type": "ephemeral",
+                        "attachments": [
+                            getSlackButtons(task),
+                            {
+                                "text": task.description,
+                            },
+                            {
+                                "callback_id": 'done',
+                                "attachment_type": "default",
+                                "actions": [
+                                    {
+                                        "name": "done",
+                                        "text": "Done",
+                                        "type": "button",
+                                        "value": "done"
+                                    },
+                                ]
+                            }
+                        ]
+                    });
+                }
+                else {
+                    return res.send({
+                        text: 'No tasks'
+                    });
+                }
+            }
+        }
+        if (text === 'report') {
+            req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
+            if (req.user) {
+                const tasks = yield req.controllers.tasks.report(req.user.id, getYesterdayString());
+                return res.send({
+                    "response_type": "ephemeral",
+                    "attachments": tasks.slice(0, 100).map(getSlackButtons)
+                        .map($ => {
+                        delete $.actions;
+                        return $;
+                    })
+                        .concat([{
+                            "callback_id": 'done',
+                            "attachment_type": "default",
+                            "actions": [
+                                {
+                                    "name": "done",
+                                    "text": "Done",
+                                    "type": "button",
+                                    "value": "done"
+                                },
+                            ]
+                        }])
+                });
+            }
+            else {
+                res.send({
+                    "response_type": "in_channel",
+                    "text": "Couldn't find a connected user"
+                });
+            }
+        }
+        if (text === 'list') {
+            req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
+            if (req.user) {
+                const tasks = yield req.controllers.tasks.list(req.user.id);
+                return res.send({
+                    "response_type": "ephemeral",
+                    "attachments": tasks.slice(0, 100).map(getSlackButtons)
+                        .concat([{
+                            "callback_id": 'done',
+                            "attachment_type": "default",
+                            "actions": [
+                                {
+                                    "name": "done",
+                                    "text": "Done",
+                                    "type": "button",
+                                    "value": "done"
+                                },
+                            ]
+                        }])
+                });
+            }
+            else {
+                res.send({
+                    "response_type": "in_channel",
+                    "text": "Couldn't find a connected user"
+                });
+            }
+        }
         const match = text.match(/<@([A-Z0-9]+)\|(\w+)>\s*(.*)/);
         if (!match) {
             res.send({
@@ -230,11 +410,26 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
         }
         if (body_unclean === '') {
             const tasks = yield req.controllers.tasks.list(req.user.id);
-            return res.send({
-                text: 'View the list at - ' + req.hostname + '\n\n' + tasks.sort(({ queue: q1, priority: p1 }, { queue: q2, priority: p2 }) => {
-                    return q1 > q2 ? 1 : q1 < q2 ? -1 : p2 - p1;
-                }).map(task => `*${task.queue.toUpperCase() || 'Not Prioritised'} | ${task.title} (${task.estimate}) *\n${task.description}\n`).join('\n')
-            });
+            req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
+            if (req.user) {
+                const tasks = yield req.controllers.tasks.list(req.user.id);
+                return res.send({
+                    "response_type": "ephemeral",
+                    "attachments": tasks.slice(0, 100).map(getSlackButtons)
+                        .concat([{
+                            "callback_id": 'done',
+                            "attachment_type": "default",
+                            "actions": [
+                                {
+                                    "name": "done",
+                                    "text": "Done",
+                                    "type": "button",
+                                    "value": "done"
+                                },
+                            ]
+                        }])
+                });
+            }
         }
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
         const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default({
@@ -244,54 +439,12 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
         }));
         res.send({
             "response_type": "in_channel",
+            "text": "The task has been added successfully!\nYou can set the priority here and estimate here",
             "attachments": [
+                getSlackButtons(saved),
                 {
-                    "callback_id": saved.id,
                     "attachment_type": "default",
-                    "pretext": "The task has been added successfully!\nYou can set the priority here and estimate here",
                     "actions": [
-                        {
-                            "name": "queue",
-                            "text": "Change Priority",
-                            "type": "select",
-                            "options": [
-                                {
-                                    "text": "High",
-                                    "value": "p1"
-                                },
-                                {
-                                    "text": "Standard",
-                                    "value": "q2"
-                                },
-                                {
-                                    "text": "Low",
-                                    "value": "q3"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "estimate",
-                            "text": "How complex is this task?",
-                            "type": "select",
-                            "options": [
-                                {
-                                    "text": "1",
-                                    "value": 1
-                                },
-                                {
-                                    "text": "2",
-                                    "value": 2
-                                },
-                                {
-                                    "text": "3",
-                                    "value": 3
-                                },
-                                {
-                                    "text": "5",
-                                    "value": 5
-                                },
-                            ]
-                        },
                         {
                             "name": "done",
                             "text": "Done",
@@ -313,6 +466,7 @@ integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, vo
                 client_id: process.env.SLACK_CLIENT_ID,
                 client_secret: process.env.SLACK_CLIENT_SECRET,
                 code,
+                redirect_uri: '/slack'
             }));
             if (access.ok) {
                 yield req.controllers.users.updateSettings(user.id, {
@@ -382,7 +536,7 @@ function errorHandler(err, req, res, next) {
     }
     res.status(500);
     res.send(err && err.stack);
-    console.log(err.stack);
+    console.log(err && err.stack);
 }
 app.use(integrationsApi);
 app.use(userRouter);

@@ -38,6 +38,8 @@
     "express-session": "^1.15.5",
     "pg": "^7.3.0",
     "ramda": "^0.24.1",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
     "showdown": "^1.7.3",
     "source-map-support": "^0.4.17",
     "sqlite3": "^3.1.9",

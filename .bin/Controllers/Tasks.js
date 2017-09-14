@@ -16,8 +16,8 @@ class TaskController {
         this.events = new events_1.EventEmitter();
         this.events.addListener(`/tasks`, (task) => __awaiter(this, void 0, void 0, function* () {
             const highest = yield this.highest(task.userId);
-            if (!highest || task.id === highest.id) {
-                this.events.emit(`/tasks/latest`, task);
+            if (!task || !highest || task.id === highest.id) {
+                this.events.emit(`/tasks/latest`, highest);
             }
         }));
     }
@@ -37,9 +37,10 @@ class TaskController {
     }
     archive(userId, id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield (yield this.connection).manager.update(Task_1.default, {
+            yield (yield this.connection).manager.update(Task_1.default, {
                 id, userId
             }, { archivedAt: new Date() });
+            this.events.emit(`/tasks`);
         });
     }
     report(userId, archivedAt) {
@@ -85,6 +86,11 @@ class TaskController {
             this.events.emit(`/users/${userId}/tasks`, saved);
             this.events.emit(`/tasks`, saved);
             return saved;
+        });
+    }
+    getById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield (yield this.connection).manager.findOneById(Task_1.default, id);
         });
     }
 }

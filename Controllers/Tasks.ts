@@ -6,10 +6,10 @@ export default class TaskController {
   private events: EventEmitter
   constructor(private connection: Promise<Connection>){
     this.events = new EventEmitter()
-    this.events.addListener(`/tasks`, async (task: TaskModel) => {
+    this.events.addListener(`/tasks`, async (task?: TaskModel) => {
       const highest = await this.highest(task.userId)
-      if (!highest || task.id === highest.id) {
-        this.events.emit(`/tasks/latest`, task)
+      if (!task || !highest || task.id === highest.id) {
+        this.events.emit(`/tasks/latest`, highest)
       }
     })
   }
@@ -26,9 +26,10 @@ export default class TaskController {
     return await (await this.connection).manager.update(TaskModel, where, updates)
   }
   async archive(userId: string, id: string){
-    return await (await this.connection).manager.update(TaskModel, {
+    await (await this.connection).manager.update(TaskModel, {
       id, userId
     }, { archivedAt: new Date() })
+    this.events.emit(`/tasks`);
   }
   async report(userId: string, archivedAt: string){
     return await (await this.connection)
@@ -66,5 +67,8 @@ export default class TaskController {
     this.events.emit(`/users/${userId}/tasks`, saved);
     this.events.emit(`/tasks`, saved);
     return saved
+  }
+  async getById(id: string){
+    return await (await this.connection).manager.findOneById(TaskModel, id)
   }
 }

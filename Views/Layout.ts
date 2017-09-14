@@ -2,6 +2,7 @@ const AppShell = (params: { body: string, navContent?: string, navLinks?:{ path:
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <meta name="slack-app-id" content="A6WAE2XJA">
         <meta charset="utf-8">
         <title>TasQ</title>
         <link rel="manifest" href="/manifest.json">
