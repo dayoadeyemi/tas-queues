@@ -14,8 +14,16 @@ const User_1 = require("../Models/User");
 const Users_1 = require("./Users");
 const pConnection_1 = require("./pConnection");
 exports.deleteUser = (userId) => __awaiter(this, void 0, void 0, function* () {
-    yield (yield pConnection_1.default).manager.remove(Task_1.default, { userId });
-    yield (yield pConnection_1.default).manager.remove(User_1.default, { id: userId });
+    yield (yield pConnection_1.default).getRepository(Task_1.default)
+        .createQueryBuilder('task')
+        .delete()
+        .where('userId = :userId', { userId })
+        .execute();
+    yield (yield pConnection_1.default).getRepository(User_1.default)
+        .createQueryBuilder('user')
+        .delete()
+        .where('id = :userId', { userId })
+        .execute();
 });
 exports.tasks = new Tasks_1.default(pConnection_1.default);
 exports.users = new Users_1.default(pConnection_1.default);

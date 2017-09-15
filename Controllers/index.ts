@@ -5,8 +5,16 @@ import UserController from './Users'
 import pConnection from './pConnection'
 
 export const deleteUser = async (userId:string) => {
-    await (await pConnection).manager.remove(TaskModel, { userId })
-    await (await pConnection).manager.remove(UserModel, { id: userId })
+    await (await pConnection).getRepository(TaskModel)
+    .createQueryBuilder('task')
+    .delete()
+    .where('userId = :userId', { userId })
+    .execute()
+    await (await pConnection).getRepository(UserModel)
+    .createQueryBuilder('user')
+    .delete()
+    .where('id = :userId', { userId })
+    .execute()
 }
 export const tasks = new TaskController(pConnection)
 export const users = new UserController(pConnection)
