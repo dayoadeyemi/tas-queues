@@ -30,8 +30,6 @@ class UserController {
             return yield (yield this.connection)
                 .manager.save(new User_1.default({
                 username: settings.username,
-                slackUserId: settings.slackUserId,
-                githubUserName: settings.githubUserName,
                 hash,
                 salt
             }));
@@ -80,6 +78,14 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             return yield (yield this.connection)
                 .manager.findOne(User_1.default, { slackUserId });
+        });
+    }
+    changePassword(userId, password) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const salt = yield randomBytesAsync(16);
+            const hash = yield hashpass(password, salt);
+            return yield (yield this.connection)
+                .manager.updateById(User_1.default, userId, { salt, hash });
         });
     }
     all() {

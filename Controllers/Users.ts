@@ -23,8 +23,6 @@ export default class UserController {
   constructor(private connection: Promise<Connection>){}
   async create(settings: {
     username:string,
-    slackUserId: string,
-    githubUserName: string
   }, password: string){
 
     const salt = await randomBytesAsync(16)
@@ -34,8 +32,6 @@ export default class UserController {
     return await (await this.connection)
     .manager.save(new UserModel({
       username: settings.username,
-      slackUserId: settings.slackUserId,
-      githubUserName: settings.githubUserName,
       hash,
       salt
     }))
@@ -79,6 +75,13 @@ export default class UserController {
   async getBySlackUserId(slackUserId: string){
     return await (await this.connection)
     .manager.findOne(UserModel, { slackUserId })
+  }
+  async changePassword(userId: string, password: string){
+
+    const salt = await randomBytesAsync(16)
+    const hash = await hashpass(password, salt)
+    return await (await this.connection)
+    .manager.updateById(UserModel, userId, { salt, hash })
   }
   async all(){
     const users = await (await this.connection)

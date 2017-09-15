@@ -4,6 +4,7 @@ import UserModel from '../Models/User'
 import TaskForm from './Forms/Task'
 import { Form } from './Forms/Utils'
 import UserSettingsForm from '../Views/Forms/UserSettings'
+import ChangePasswordForm from '../Views/Forms/ChangePassword'
 import Layout from './Layout'
 
 const SettingsView = (user: UserModel) => {
@@ -39,6 +40,14 @@ const SettingsView = (user: UserModel) => {
                         })}
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                User Settings
+            </div>
+            <div class="card-body">
+                ${ChangePasswordForm()}
             </div>
         </div>`
         

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Utils_1 = require("./Forms/Utils");
 const UserSettings_1 = require("../Views/Forms/UserSettings");
+const ChangePassword_1 = require("../Views/Forms/ChangePassword");
 const Layout_1 = require("./Layout");
 const SettingsView = (user) => {
     return Layout_1.default({
@@ -36,6 +37,14 @@ const SettingsView = (user) => {
         })}
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                User Settings
+            </div>
+            <div class="card-body">
+                ${ChangePassword_1.default()}
             </div>
         </div>`
     });

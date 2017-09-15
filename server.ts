@@ -131,8 +131,13 @@ tasksRouter.get('/settings', async (req, res) => {
 
 tasksRouter.post('/settings', async (req, res) => {
     await req.controllers.users.updateSettings(req.user.id, req.body)
-    if (req.cookies.browser) res.redirect('/')
-    else res.sendStatus(204).end()
+    res.redirect('/settings')
+})
+
+tasksRouter.post('/change-password', async (req, res) => {
+    await req.controllers.users.verify(req.user.id, req.body.oldPassword)
+    await req.controllers.users.changePassword(req.user.id, req.body.password)
+    res.redirect('/settings')
 })
 
 tasksRouter.post('/slack/authorize', async (req, res) => {
@@ -544,8 +549,6 @@ userRouter.post('/sign-up', async (req, res, next) => {
     } = req.body
     const user = await req.controllers.users.create({
         username,
-        slackUserId,
-        githubUserName,
     }, password)
     req.session.userId = user.id
     res.redirect('/')
