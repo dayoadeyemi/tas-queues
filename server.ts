@@ -314,7 +314,7 @@ integrationsApi.post('/slack', async (req, res) => {
             "attachments": [
                 getSlackButtons(task),
                 {
-                    "callback_id": task.id,
+                    "callback_id": 'done',
                     "attachment_type": "default",
                     "actions": [
                         {
