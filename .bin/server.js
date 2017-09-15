@@ -117,9 +117,14 @@ tasksRouter.post('/settings', (req, res) => __awaiter(this, void 0, void 0, func
     res.redirect('/settings');
 }));
 tasksRouter.post('/change-password', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    yield req.controllers.users.verify(req.user.id, req.body.oldPassword);
-    yield req.controllers.users.changePassword(req.user.id, req.body.password);
-    res.redirect('/settings');
+    if (yield req.controllers.users.verify(req.user.id, req.body.oldPassword)) {
+        yield req.controllers.users.changePassword(req.user.id, req.body.password);
+        res.redirect('/settings');
+    }
+    else {
+        res.status(400);
+        res.send('incorrect password');
+    }
 }));
 tasksRouter.post('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
     const slackOauthState = yield req.controllers.users.createSlackOathState(req.user.id);

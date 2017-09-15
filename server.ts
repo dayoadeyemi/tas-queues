@@ -135,9 +135,13 @@ tasksRouter.post('/settings', async (req, res) => {
 })
 
 tasksRouter.post('/change-password', async (req, res) => {
-    await req.controllers.users.verify(req.user.id, req.body.oldPassword)
-    await req.controllers.users.changePassword(req.user.id, req.body.password)
-    res.redirect('/settings')
+    if (await req.controllers.users.verify(req.user.id, req.body.oldPassword)) {
+        await req.controllers.users.changePassword(req.user.id, req.body.password)
+        res.redirect('/settings')
+    } else {
+        res.status(400)
+        res.send('incorrect password')
+    }
 })
 
 tasksRouter.post('/slack/authorize', async (req, res) => {
