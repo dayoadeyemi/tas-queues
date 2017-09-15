@@ -6,8 +6,6 @@ const SignUpForm = () => Form({
   children: [
     Input({ type: 'text', id: 'username', name: 'Username' }),
     Input({ type: 'password', id: 'password', name: 'Password' }),
-    Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
-    Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
   ],
 })
 

@@ -7,8 +7,6 @@ const SignUpForm = () => Utils_1.Form({
     children: [
         Utils_1.Input({ type: 'text', id: 'username', name: 'Username' }),
         Utils_1.Input({ type: 'password', id: 'password', name: 'Password' }),
-        Utils_1.Input({ type: 'text', id: 'slackUserId', name: 'Slack User Id' }),
-        Utils_1.Input({ type: 'text', id: 'githubUserName', name: 'Github Username' }),
     ],
 });
 exports.default = SignUpForm;
