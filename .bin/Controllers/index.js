@@ -13,7 +13,7 @@ const Tasks_1 = require("./Tasks");
 const User_1 = require("../Models/User");
 const Users_1 = require("./Users");
 const pConnection_1 = require("./pConnection");
-exports.deleteUser = (userId, password) => __awaiter(this, void 0, void 0, function* () {
+exports.deleteUser = (userId) => __awaiter(this, void 0, void 0, function* () {
     yield (yield pConnection_1.default).manager.remove(Task_1.default, { userId });
     yield (yield pConnection_1.default).manager.remove(User_1.default, { id: userId });
 });

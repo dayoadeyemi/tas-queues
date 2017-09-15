@@ -4,7 +4,7 @@ import UserModel from '../Models/User'
 import UserController from './Users'
 import pConnection from './pConnection'
 
-export const deleteUser = async (userId:string, password: string) => {
+export const deleteUser = async (userId:string) => {
     await (await pConnection).manager.remove(TaskModel, { userId })
     await (await pConnection).manager.remove(UserModel, { id: userId })
 }
