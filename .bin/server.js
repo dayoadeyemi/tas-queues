@@ -306,7 +306,19 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
     }
     else {
         const { team_domain, team_id: teamId, user_name: username, user_id: authorSlackUserId, text, } = req.body;
-        if (text === '') {
+        if (text === '' || text === 'help') {
+            return res.send({
+                response_type: 'ephemeral',
+                text: '*TasQ commands*' + '\n' +
+                    '`\\task help` show this helpful list of commands' + '\n' +
+                    '`\\task show` show the current active task' + '\n' +
+                    '`\\task list` list all availible tasks for updating/completing' + '\n' +
+                    '`\\task report` report the recently completed tasks' + '\n' +
+                    '`\\task @user` show the task list for a particular user' + '\n' +
+                    '`\\task @user <text>` give a task to a user with the'
+            });
+        }
+        if (text === 'show') {
             req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
             if (req.user) {
                 const task = yield req.controllers.tasks.highest(req.user.id);
