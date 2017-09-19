@@ -359,7 +359,7 @@ integrationsApi.post('/slack', async (req, res) => {
                     '`\\task @user <text>` give a task to a user with the'
             })
         }
-        
+
         if (text === 'show') {
             req.user = await req.controllers.users.getBySlackUserId(authorSlackUserId)
             if (req.user) {
