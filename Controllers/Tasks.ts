@@ -38,13 +38,19 @@ export default class TaskController {
     .where("task.userId = :userId AND task.deletedAt IS NULL AND task.archivedAt > :archivedAt", {
       userId, archivedAt
     })
-    .orderBy({ priority: 'DESC' })
+    .orderBy({
+      queue: 'DESC',
+      priority: 'DESC'
+    })
     .getMany()
   }
   async list(userId: string){
     return await (await this.connection).manager.find(TaskModel, {
         where: { userId, archivedAt: null, deletedAt: null },
-        order: { priority: 'DESC' }
+        order: {
+          queue: 'DESC',
+          priority: 'DESC'
+        }
     })
   }
   async highest(userId: string, where: Partial<TaskModel> = {}){
@@ -54,7 +60,10 @@ export default class TaskController {
           archivedAt: null,
           deletedAt: null,
         }, where),
-        order: { priority: 'DESC' }
+        order: {
+          queue: 'DESC',
+          priority: 'DESC'
+        }
     })
   }
   async add(userId: string, task: TaskModel){

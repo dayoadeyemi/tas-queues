@@ -51,7 +51,10 @@ class TaskController {
                 .where("task.userId = :userId AND task.deletedAt IS NULL AND task.archivedAt > :archivedAt", {
                 userId, archivedAt
             })
-                .orderBy({ priority: 'DESC' })
+                .orderBy({
+                queue: 'DESC',
+                priority: 'DESC'
+            })
                 .getMany();
         });
     }
@@ -59,7 +62,10 @@ class TaskController {
         return __awaiter(this, void 0, void 0, function* () {
             return yield (yield this.connection).manager.find(Task_1.default, {
                 where: { userId, archivedAt: null, deletedAt: null },
-                order: { priority: 'DESC' }
+                order: {
+                    queue: 'DESC',
+                    priority: 'DESC'
+                }
             });
         });
     }
@@ -71,7 +77,10 @@ class TaskController {
                     archivedAt: null,
                     deletedAt: null,
                 }, where),
-                order: { priority: 'DESC' }
+                order: {
+                    queue: 'DESC',
+                    priority: 'DESC'
+                }
             });
         });
     }
