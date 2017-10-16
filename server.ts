@@ -159,7 +159,7 @@ tasksRouter.post('/tasks/:id/archive', async (req, res) => {
     else res.sendStatus(204).end()
 })
 
-tasksRouter.post('/tasks', async (req, res) => {    
+tasksRouter.post('/tasks', async (req, res) => {
     const saved = await req.controllers.tasks.add(req.user.id, new TaskModel(req.body))
     if (req.cookies.browser) res.redirect('/')
     else res.send(saved)
@@ -198,7 +198,7 @@ integrationsApi.post('/github', async (req, res) => {
                 return res.send(saved)
             }
             break
-    
+
         default:
             break
     }
@@ -260,7 +260,7 @@ const getSlackButtons = (task: TaskModel) => {
                 "text": "Change Priority",
                 "type": "select",
                 "options": queueOptions,
-                "selected_options": [queueOptions.find(option => 
+                "selected_options": [queueOptions.find(option =>
                 option.value >= task.queue)]
             },
             {
@@ -268,7 +268,7 @@ const getSlackButtons = (task: TaskModel) => {
                 "text": "How complex is this task?",
                 "type": "select",
                 "options": estimateOptions,
-                "selected_options": [estimateOptions.find(option => 
+                "selected_options": [estimateOptions.find(option =>
                     option.value >= String(task.estimate))]
             },
             {
@@ -293,7 +293,7 @@ integrationsApi.post('/slack', async (req, res) => {
             },
             original_message
         } = JSON.parse(req.body.payload)
-        
+
         if (id === 'done') {
             return res.send({
                 "response_type": "in_channel",
@@ -418,7 +418,7 @@ integrationsApi.post('/slack', async (req, res) => {
                         ]
                     }])
                 })
-            } else { 
+            } else {
                 res.send({
                     "response_type": "in_channel",
                     "text": "Couldn't find a connected user"
@@ -446,7 +446,7 @@ integrationsApi.post('/slack', async (req, res) => {
                         ]
                     }])
                 })
-            } else { 
+            } else {
                 res.send({
                     "response_type": "in_channel",
                     "text": "Couldn't find a connected user"
@@ -455,7 +455,7 @@ integrationsApi.post('/slack', async (req, res) => {
         }
 
         const match = text.match(/<@([A-Z0-9]+)\|(\w+)>\s*(.*)/)
-        
+
         if (!match) {
             res.send({
                 "response_type": "in_channel",
@@ -499,13 +499,13 @@ integrationsApi.post('/slack', async (req, res) => {
             }
         }
         const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`)
-        
+
         const saved = await req.controllers.tasks.add(req.user.id, new TaskModel({
             queue: 'q1',
             title: body,
             description: `slack task from ${username}`,
         }))
-        
+
         res.send({
             "response_type": "in_channel",
             "text": "The task has been added successfully!\nYou can set the priority here and estimate here",
@@ -604,7 +604,7 @@ tasksApi.get('/tasks', async (req, res) => {
 });
 
 tasksApi.get('/tasks-report', async (req, res) => {
-    const { report } = req.query 
+    const { report } = req.query
     const tasks = await req.controllers.tasks.report(req.params.userId, report)
     res.send(tasks)
 });

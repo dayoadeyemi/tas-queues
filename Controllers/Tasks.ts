@@ -39,7 +39,7 @@ export default class TaskController {
       userId, archivedAt
     })
     .orderBy({
-      queue: 'DESC',
+      queue: 'ASC',
       priority: 'DESC'
     })
     .getMany()
@@ -48,7 +48,7 @@ export default class TaskController {
     return await (await this.connection).manager.find(TaskModel, {
         where: { userId, archivedAt: null, deletedAt: null },
         order: {
-          queue: 'DESC',
+          queue: 'ASC',
           priority: 'DESC'
         }
     })
@@ -61,7 +61,7 @@ export default class TaskController {
           deletedAt: null,
         }, where),
         order: {
-          queue: 'DESC',
+          queue: 'ASC',
           priority: 'DESC'
         }
     })

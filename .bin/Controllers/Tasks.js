@@ -52,7 +52,7 @@ class TaskController {
                 userId, archivedAt
             })
                 .orderBy({
-                queue: 'DESC',
+                queue: 'ASC',
                 priority: 'DESC'
             })
                 .getMany();
@@ -63,7 +63,7 @@ class TaskController {
             return yield (yield this.connection).manager.find(Task_1.default, {
                 where: { userId, archivedAt: null, deletedAt: null },
                 order: {
-                    queue: 'DESC',
+                    queue: 'ASC',
                     priority: 'DESC'
                 }
             });
@@ -78,7 +78,7 @@ class TaskController {
                     deletedAt: null,
                 }, where),
                 order: {
-                    queue: 'DESC',
+                    queue: 'ASC',
                     priority: 'DESC'
                 }
             });
