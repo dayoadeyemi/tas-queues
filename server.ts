@@ -8,7 +8,7 @@ import HomeView from './Views/Home'
 import ReportView from './Views/Report'
 import MainView from './Views/Main'
 import SettingsView from './Views/Settings'
-import { IssuesEvent } from './GitHub'
+import { IssuesEvent, PullRequestEvent } from './GitHub'
 import * as controllers from './Controllers/'
 import * as express from 'express'
 import { urlencoded, json } from 'body-parser'
@@ -182,25 +182,54 @@ const base256 = (n) => {
 
 const integrationsApi = (router() as express.Router)
 integrationsApi.post('/github', async (req, res) => {
-    const issuesEvent: IssuesEvent = req.body
-    switch (issuesEvent.action) {
-        case 'assigned':
-            req.user = await req.controllers.users
-            .getByGitHubUserName(issuesEvent.assignee.login)
-            if (req.user){
-                const task = new TaskModel({
-                    id: v4({ random: base256(issuesEvent.issue.id) }),
-                    queue: 'q1',
-                    title: issuesEvent.issue.title,
-                    description: issuesEvent.issue.body
-                })
-                const saved = await req.controllers.tasks.add(req.user.id, task)
-                return res.send(saved)
-            }
-            break
+    switch (req.header('X-Github-Event')) {
+        case 'issue':
+            const issuesEvent: IssuesEvent = req.body
+            switch (issuesEvent.action) {
+                case 'assigned':
+                    req.user = await req.controllers.users
+                    .getByGitHubUserName(issuesEvent.assignee.login)
+                    if (req.user){
+                        const task = new TaskModel({
+                            id: v4({ random: base256(issuesEvent.issue.id) }),
+                            queue: 'q1',
+                            title: issuesEvent.issue.title,
+                            description: issuesEvent.issue.body
+                        })
+                        const saved = await req.controllers.tasks.add(req.user.id, task)
+                        return res.send(saved)
+                    }
+                    break
 
+                default:
+                    break
+            }
+            break;
+        case 'pull_request':
+            const pullRequestEvent: PullRequestEvent = req.body
+            switch (pullRequestEvent.action) {
+                case 'review_requested':
+                    req.user = await req.controllers.users
+                    .getByGitHubUserName(pullRequestEvent.assignee.login)
+                    if (req.user){
+                        const task = new TaskModel({
+                            id: v4({ random: base256(pullRequestEvent.issue.id) }),
+                            queue: 'q1',
+                            title: pullRequestEvent.issue.title,
+                            description: pullRequestEvent.issue.body
+                        })
+                        const saved = await req.controllers.tasks.add(req.user.id, task)
+                        return res.send(saved)
+                    }
+                    break
+
+                default:
+                    break
+            }
+            break;
+    
         default:
-            break
+            break;
     }
     res.send();
 });
