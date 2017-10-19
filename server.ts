@@ -210,13 +210,13 @@ integrationsApi.post('/github', async (req, res) => {
             switch (pullRequestEvent.action) {
                 case 'review_requested':
                     req.user = await req.controllers.users
-                    .getByGitHubUserName(pullRequestEvent.assignee.login)
+                    .getByGitHubUserName(pullRequestEvent.requested_reviewer.login)
                     if (req.user){
                         const task = new TaskModel({
-                            id: v4({ random: base256(pullRequestEvent.issue.id) }),
-                            queue: 'q1',
-                            title: pullRequestEvent.issue.title,
-                            description: pullRequestEvent.issue.body
+                            id: v4({ random: base256(pullRequestEvent.pull_request.id) }),
+                            queue: 'p2',
+                            title: '[Review]' + pullRequestEvent.pull_request.title,
+                            description: pullRequestEvent.pull_request.body
                         })
                         const saved = await req.controllers.tasks.add(req.user.id, task)
                         return res.send(saved)

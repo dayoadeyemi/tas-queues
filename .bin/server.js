@@ -165,20 +165,47 @@ const base256 = (n) => {
 };
 const integrationsApi = router();
 integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    const issuesEvent = req.body;
-    switch (issuesEvent.action) {
-        case 'assigned':
-            req.user = yield req.controllers.users
-                .getByGitHubUserName(issuesEvent.assignee.login);
-            if (req.user) {
-                const task = new Task_1.default({
-                    id: uuid_1.v4({ random: base256(issuesEvent.issue.id) }),
-                    queue: 'q1',
-                    title: issuesEvent.issue.title,
-                    description: issuesEvent.issue.body
-                });
-                const saved = yield req.controllers.tasks.add(req.user.id, task);
-                return res.send(saved);
+    switch (req.header('X-Github-Event')) {
+        case 'issue':
+            const issuesEvent = req.body;
+            switch (issuesEvent.action) {
+                case 'assigned':
+                    req.user = yield req.controllers.users
+                        .getByGitHubUserName(issuesEvent.assignee.login);
+                    if (req.user) {
+                        const task = new Task_1.default({
+                            id: uuid_1.v4({ random: base256(issuesEvent.issue.id) }),
+                            queue: 'q1',
+                            title: issuesEvent.issue.title,
+                            description: issuesEvent.issue.body
+                        });
+                        const saved = yield req.controllers.tasks.add(req.user.id, task);
+                        return res.send(saved);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 'pull_request':
+            const pullRequestEvent = req.body;
+            switch (pullRequestEvent.action) {
+                case 'review_requested':
+                    req.user = yield req.controllers.users
+                        .getByGitHubUserName(pullRequestEvent.requested_reviewer.login);
+                    if (req.user) {
+                        const task = new Task_1.default({
+                            id: uuid_1.v4({ random: base256(pullRequestEvent.pull_request.id) }),
+                            queue: 'p2',
+                            title: '[Review]' + pullRequestEvent.pull_request.title,
+                            description: pullRequestEvent.pull_request.body
+                        });
+                        const saved = yield req.controllers.tasks.add(req.user.id, task);
+                        return res.send(saved);
+                    }
+                    break;
+                default:
+                    break;
             }
             break;
         default:
