@@ -442,13 +442,6 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
             _type === '!subteam^' ? 'team' :
                 null;
         if (type === 'user') {
-            req.user = yield req.controllers.users.getBySlackUserId(slackId);
-            if (!req.user) {
-                return res.send({
-                    "response_type": "in_channel",
-                    "text": "Couldn't find a user registered for slack name @" + slackUserName
-                });
-            }
             if (body_unclean === '') {
                 return res.send({
                     "text": yield getSlackSummary(req.controllers, slackId),
