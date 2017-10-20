@@ -23,6 +23,8 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const uuid_1 = require("uuid");
 const qs_1 = require("qs");
+const timeago_js_1 = require("timeago.js");
+const ta = timeago_js_1.default();
 const getContent = function (url) {
     // return new pending promise
     return new Promise((resolve, reject) => {
@@ -130,7 +132,7 @@ tasksRouter.post('/slack/authorize', (req, res) => __awaiter(this, void 0, void 
     const slackOauthState = yield req.controllers.users.createSlackOathState(req.user.id);
     res.redirect('https://slack.com/oauth/authorize?' + qs_1.stringify({
         client_id: process.env.SLACK_CLIENT_ID,
-        scope: 'commands,users.profile:write,users:write',
+        scope: 'commands,users.profile:write,users:write,usergroups:read',
         state: slackOauthState
     }));
 }));
@@ -216,7 +218,7 @@ integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, fu
 controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, function* () {
     const user = yield controllers.users.getById(task.userId);
     if (user && user.slackUserId && user.slackAccessToken) {
-        const reponse = yield getContent('https://slack.com/api/users.profile.set?' + qs_1.stringify({
+        const response = yield getContent('https://slack.com/api/users.profile.set?' + qs_1.stringify({
             token: user.slackAccessToken,
             name: 'status_text',
             user: user.slackUserId,
@@ -224,6 +226,7 @@ controllers.tasks.addLatestListener((task) => __awaiter(this, void 0, void 0, fu
         }));
     }
 }));
+const getSlackText = (task) => `[${task.queue.toUpperCase() || 'Not Prioritised'}] ${task.title} (${task.estimate}) _created ${ta.format(task.createdAt)}_`;
 const getSlackButtons = (task) => {
     const queueOptions = [
         {
@@ -260,7 +263,7 @@ const getSlackButtons = (task) => {
     const attachment = {
         "callback_id": task.id,
         "attachment_type": "default",
-        "text": `${task.queue.toUpperCase() || 'Not Prioritised'} | ${task.title} (${task.estimate})`,
+        "text": getSlackText(task),
         "actions": [
             {
                 "name": "queue",
@@ -286,6 +289,20 @@ const getSlackButtons = (task) => {
     };
     return attachment;
 };
+const getSlackSummary = ({ users, tasks }, slackUserId) => __awaiter(this, void 0, void 0, function* () {
+    const user = yield users.getBySlackUserId(slackUserId);
+    if (user) {
+        const tasksRemaining = yield tasks.list(user.id);
+        const tasksCompleted = yield tasks.report(user.id, getYesterdayString());
+        return `<@${slackUserId}|>\n\tTasks Remaining\n\t\t` +
+            tasksRemaining.map(getSlackText).join('\n\t\t') +
+            `\n\tTasks Completed\n\t\t` +
+            tasksCompleted.map(getSlackText).join('\n\t\t');
+    }
+    else {
+        return `<@${slackUserId}|>\n\tCouldn't find a connected user`;
+    }
+});
 integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, function* () {
     if (req.body.payload) {
         const { actions, callback_id: id, user: { name: username, id: slackUserId, }, original_message } = JSON.parse(req.body.payload);
@@ -340,9 +357,9 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                     '`\\task help` show this helpful list of commands' + '\n' +
                     '`\\task show` show the current active task' + '\n' +
                     '`\\task list` list all availible tasks for updating/completing' + '\n' +
-                    '`\\task report` report the recently completed tasks' + '\n' +
-                    '`\\task @user` show the task list for a particular user' + '\n' +
-                    '`\\task @user <text>` give a task to a user with the'
+                    '`\\task summary` show your task summary' + '\n' +
+                    '`\\task @user/team` show the task summary for a user' + '\n' +
+                    '`\\task @user <text>` give a task to a user'
             });
         }
         if (text === 'show') {
@@ -379,37 +396,11 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 }
             }
         }
-        if (text === 'report') {
-            req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
-            if (req.user) {
-                const tasks = yield req.controllers.tasks.report(req.user.id, getYesterdayString());
-                return res.send({
-                    "response_type": "ephemeral",
-                    "attachments": tasks.slice(0, 100).map(getSlackButtons)
-                        .map($ => {
-                        delete $.actions;
-                        return $;
-                    })
-                        .concat([{
-                            "callback_id": 'done',
-                            "attachment_type": "default",
-                            "actions": [
-                                {
-                                    "name": "done",
-                                    "text": "Done",
-                                    "type": "button",
-                                    "value": "done"
-                                },
-                            ]
-                        }])
-                });
-            }
-            else {
-                res.send({
-                    "response_type": "in_channel",
-                    "text": "Couldn't find a connected user"
-                });
-            }
+        if (text === 'summary') {
+            return res.send({
+                "text": yield getSlackSummary(req.controllers, authorSlackUserId),
+                "response_type": "ephemeral"
+            });
         }
         if (text === 'list') {
             req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
@@ -439,34 +430,30 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 });
             }
         }
-        const match = text.match(/<@([A-Z0-9]+)\|(\w+)>\s*(.*)/);
+        const match = text.match(/<(\!subteam\^|@)([A-Z0-9]+)\|(@?\w+)>\s*(.*)/);
         if (!match) {
-            res.send({
-                "response_type": "in_channel",
-                "text": "Couldn't find a user at the start of the message"
-            });
-        }
-        const [_, slackUserId, slackUserName, body_unclean] = match;
-        req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
-        if (!req.user) {
             return res.send({
                 "response_type": "in_channel",
-                "text": "Couldn't find a user registered for slack name @" + slackUserName
+                "text": "Couldn't find a user/team at the start of the message"
             });
         }
-        if (body_unclean === '') {
-            const tasks = yield req.controllers.tasks.list(req.user.id);
-            req.user = yield req.controllers.users.getBySlackUserId(slackUserId);
-            if (req.user) {
-                const tasks = yield req.controllers.tasks.list(req.user.id);
+        const [_, _type, slackId, slackUserName, body_unclean] = match;
+        const type = _type === '@' ? 'user' :
+            _type === '!subteam^' ? 'team' :
+                null;
+        if (type === 'user') {
+            req.user = yield req.controllers.users.getBySlackUserId(slackId);
+            if (!req.user) {
                 return res.send({
                     "response_type": "in_channel",
-                    "attachments": tasks.slice(0, 100).map(getSlackButtons)
-                        .map($ => {
-                        delete $.actions;
-                        return $;
-                    })
-                        .concat([{
+                    "text": "Couldn't find a user registered for slack name @" + slackUserName
+                });
+            }
+            if (body_unclean === '') {
+                return res.send({
+                    "text": yield getSlackSummary(req.controllers, slackId),
+                    "response_type": "in_channel",
+                    "attachments": [{
                             "callback_id": 'done',
                             "attachment_type": "default",
                             "actions": [
@@ -477,34 +464,62 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                                     "value": "done"
                                 },
                             ]
-                        }])
+                        }]
                 });
             }
+            req.user = yield req.controllers.users.getBySlackUserId(slackId);
+            if (!req.user) {
+                return res.send({
+                    "response_type": "in_channel",
+                    "text": "Couldn't find a connected user"
+                });
+            }
+            const body = body_unclean.replace(/<@([A-Z0-9]+)\|(@?\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
+            const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default({
+                queue: 'q1',
+                title: body,
+                description: `slack task from ${username}`,
+            }));
+            res.send({
+                "response_type": "in_channel",
+                "text": "The task has been added successfully!\nYou can set the priority here and estimate here",
+                "attachments": [
+                    getSlackButtons(saved),
+                    {
+                        "attachment_type": "default",
+                        "actions": [
+                            {
+                                "name": "done",
+                                "text": "Done",
+                                "type": "button",
+                                "value": "done"
+                            },
+                        ]
+                    }
+                ]
+            });
         }
-        const body = body_unclean.replace(/<@([A-Z0-9]+)\|(\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`);
-        const saved = yield req.controllers.tasks.add(req.user.id, new Task_1.default({
-            queue: 'q1',
-            title: body,
-            description: `slack task from ${username}`,
-        }));
-        res.send({
-            "response_type": "in_channel",
-            "text": "The task has been added successfully!\nYou can set the priority here and estimate here",
-            "attachments": [
-                getSlackButtons(saved),
-                {
-                    "attachment_type": "default",
-                    "actions": [
-                        {
-                            "name": "done",
-                            "text": "Done",
-                            "type": "button",
-                            "value": "done"
-                        },
-                    ]
+        else if (type === 'team') {
+            req.user = yield req.controllers.users.getBySlackUserId(authorSlackUserId);
+            if (req.user.slackAccessToken) {
+                const { ok, users: slackUserIds } = yield getContent('https://slack.com/api/usergroups.users.list?' + qs_1.stringify({
+                    token: req.user.slackAccessToken,
+                    usergroup: slackId,
+                }));
+                if (ok) {
+                    const summaries = yield Promise.all(slackUserIds.map(s => getSlackSummary(controllers, s)));
+                    return res.send({
+                        text: summaries.join('\n\n')
+                    });
                 }
-            ]
-        });
+                else {
+                    return res.send('Failed to retrieve slack team from slack api');
+                }
+            }
+            else {
+                return res.send('Failed to retrieve slack team, no token');
+            }
+        }
     }
 }));
 integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -512,18 +527,22 @@ integrationsApi.get('/slack/authorize', (req, res) => __awaiter(this, void 0, vo
     if (code && state) {
         const user = yield req.controllers.users.getBySlackOathState(state);
         if (user) {
-            const access = yield getContent('https://slack.com/api/oauth.access?' + qs_1.stringify({
+            const accessConfig = {
                 client_id: process.env.SLACK_CLIENT_ID,
                 client_secret: process.env.SLACK_CLIENT_SECRET,
                 code,
-                redirect_uri: '/slack'
-            }));
+                redirect_uri: `https://${req.hostname}/slack/authorize`
+            };
+            const access = yield getContent('https://slack.com/api/oauth.access?' + qs_1.stringify(accessConfig));
             if (access.ok) {
                 yield req.controllers.users.updateSettings(user.id, {
                     slackAccessToken: access.access_token,
                     slackOauthState: null,
-                    slackUserId: access.user.id
+                    slackUserId: access.user_id
                 });
+            }
+            else {
+                console.log('Failed access', accessConfig, access);
             }
         }
     }
@@ -574,7 +593,7 @@ tasksApi.get('/tasks-report', (req, res) => __awaiter(this, void 0, void 0, func
     res.send(tasks);
 }));
 tasksApi.post('/tasks/:id/archive', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    yield yield req.controllers.tasks.archive(req.params.userId, req.params.id);
+    yield req.controllers.tasks.archive(req.params.userId, req.params.id);
     res.sendStatus(204).end();
 }));
 userRouter.use('/users/:userid', tasksApi);
@@ -586,6 +605,10 @@ function errorHandler(err, req, res, next) {
     res.send(err && err.stack);
     console.log(err && err.stack);
 }
+process.on('unhandledRejection', function (reason, p) {
+    console.log("Possibly Unhandled Rejection at: Promise ", p, " reason: ", reason);
+    // application specific logging here
+});
 app.use(integrationsApi);
 app.use(userRouter);
 app.use(tasksRouter);
