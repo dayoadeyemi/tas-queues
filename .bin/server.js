@@ -479,6 +479,7 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 "attachments": [
                     getSlackButtons(saved),
                     {
+                        "callback_id": 'done',
                         "attachment_type": "default",
                         "actions": [
                             {
@@ -502,7 +503,22 @@ integrationsApi.post('/slack', (req, res) => __awaiter(this, void 0, void 0, fun
                 if (ok) {
                     const summaries = yield Promise.all(slackUserIds.map(s => getSlackSummary(controllers, s)));
                     return res.send({
-                        text: summaries.join('\n\n')
+                        text: summaries.join('\n\n'),
+                        "response_type": "in_channel",
+                        "attachments": [
+                            {
+                                "callback_id": 'done',
+                                "attachment_type": "default",
+                                "actions": [
+                                    {
+                                        "name": "done",
+                                        "text": "Done",
+                                        "type": "button",
+                                        "value": "done"
+                                    },
+                                ]
+                            }
+                        ]
                     });
                 }
                 else {

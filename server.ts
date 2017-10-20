@@ -528,6 +528,7 @@ integrationsApi.post('/slack', async (req, res) => {
                 "attachments": [
                     getSlackButtons(saved),
                     {
+                        "callback_id": 'done',
                         "attachment_type": "default",
                         "actions": [
                             {
@@ -554,7 +555,22 @@ integrationsApi.post('/slack', async (req, res) => {
                 if (ok) {
                     const summaries = await Promise.all(slackUserIds.map(s => getSlackSummary(controllers, s)))
                     return res.send({
-                        text: summaries.join('\n\n')
+                        text: summaries.join('\n\n'),
+                        "response_type": "in_channel",
+                        "attachments": [
+                            {
+                                "callback_id": 'done',
+                                "attachment_type": "default",
+                                "actions": [
+                                    {
+                                        "name": "done",
+                                        "text": "Done",
+                                        "type": "button",
+                                        "value": "done"
+                                    },
+                                ]
+                            }
+                        ]
                     })
                 } else {
                     return res.send('Failed to retrieve slack team from slack api')
