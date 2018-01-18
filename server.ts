@@ -185,7 +185,7 @@ const base256 = (n) => {
 const integrationsApi = (router() as express.Router)
 integrationsApi.post('/github', async (req, res) => {
     switch (req.header('X-Github-Event')) {
-        case 'issue':
+        case 'issues':
             const issuesEvent: IssuesEvent = req.body
             switch (issuesEvent.action) {
                 case 'assigned':
@@ -207,7 +207,7 @@ integrationsApi.post('/github', async (req, res) => {
                     break
             }
             break;
-        case 'pull_request':
+        case 'pull_requests':
             const pullRequestEvent: PullRequestEvent = req.body
             switch (pullRequestEvent.action) {
                 case 'review_requested':
@@ -229,7 +229,7 @@ integrationsApi.post('/github', async (req, res) => {
                     break
             }
             break;
-    
+
         default:
             break;
     }
@@ -486,7 +486,7 @@ integrationsApi.post('/slack', async (req, res) => {
         const type = _type === '@' ? 'user' :
             _type === '!subteam^' ? 'team' :
                 null
-        
+
         if (type === 'user'){
             if (body_unclean === '') {
                 return res.send({
@@ -515,13 +515,13 @@ integrationsApi.post('/slack', async (req, res) => {
                 })
             }
             const body = body_unclean.replace(/<@([A-Z0-9]+)\|(@?\w+)>/, `[@$2](https://${team_domain}.slack.com/team/$2)`)
-    
+
             const saved = await req.controllers.tasks.add(req.user.id, new TaskModel({
                 queue: 'q1',
                 title: body,
                 description: `slack task from ${username}`,
             }))
-    
+
             res.send({
                 "response_type": "in_channel",
                 "text": "The task has been added successfully!\nYou can set the priority here and estimate here",

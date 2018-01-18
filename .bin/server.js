@@ -168,7 +168,7 @@ const base256 = (n) => {
 const integrationsApi = router();
 integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, function* () {
     switch (req.header('X-Github-Event')) {
-        case 'issue':
+        case 'issues':
             const issuesEvent = req.body;
             switch (issuesEvent.action) {
                 case 'assigned':
@@ -189,7 +189,7 @@ integrationsApi.post('/github', (req, res) => __awaiter(this, void 0, void 0, fu
                     break;
             }
             break;
-        case 'pull_request':
+        case 'pull_requests':
             const pullRequestEvent = req.body;
             switch (pullRequestEvent.action) {
                 case 'review_requested':
